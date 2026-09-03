@@ -111,3 +111,15 @@ def test_streamlit_plotly_charts_have_explicit_keys() -> None:
     assert plotly_calls
     for call in plotly_calls:
         assert any(keyword.arg == "key" for keyword in call.keywords), f"Missing key at line {call.lineno}"
+
+
+def test_streamlit_match_view_uses_integrated_selectable_pitch() -> None:
+    app = Path("app/streamlit_app.py").read_text(encoding="utf-8")
+    assert "match_activity_figure" in app
+    assert 'on_select="rerun"' in app
+    assert 'selection_mode="multi-row"' in app
+    assert 'st.radio("Pitch view"' not in app
+    assert "Start-point map" not in app
+    assert "Action-specific detail" not in app
+    assert "Dynamic action flows" not in app
+    assert "tab_tracking" not in app

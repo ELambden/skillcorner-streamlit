@@ -33,7 +33,7 @@ from skillcorner_intelligence.presentation import (
     speed_band_label,
     tracking_label,
 )
-from skillcorner_intelligence.visualization import action_flow_figure, offball_run_figure, pitch_figure, radar_figure
+from skillcorner_intelligence.visualization import match_activity_figure, radar_figure
 
 st.set_page_config(page_title="SkillCorner Football Intelligence Lab", layout="wide")
 
@@ -75,6 +75,33 @@ PHYSICAL_FILTER_COLUMNS = [
     "intensity_z_score",
     "volume_z_score",
     "explosiveness_z_score",
+]
+
+PROFILE_SCATTER_COLUMNS = [
+    *ZSCORE_COLUMNS,
+    *SCORE_COLUMNS,
+    "minutes",
+    "psv99",
+    "total_metersperminute_full_all",
+    "running_distance_full_all",
+    "hsr_distance_full_all",
+    "hsr_count_full_all",
+    "sprint_distance_full_all",
+    "sprint_count_full_all",
+    "hi_count_full_all",
+    "offballrun_count_p30tip",
+    "offballrun_count_dangerous_p30tip",
+    "offballrun_count_penaltyarea_p30tip",
+    "offballrun_count_targeted_p30tip",
+    "offballrun_count_received_p30tip",
+    "offballrun_count_shotwithin10s_p30tip",
+    "pass_count_linebreak_completed_p30tip",
+    "pass_count_torun_completed_p30tip",
+    "pass_count_dangerous_completed_p30tip",
+    "pass_count_difficultpass_attempted_p30tip",
+    "pass_avgxpass_attempted",
+    "pass_count_shotwithin10s_p30tip",
+    "pass_pct_completed",
 ]
 
 PLAYER_TABLE_COLUMNS = [
@@ -266,6 +293,35 @@ def zscore_long_frame(frame: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     return long
 
 
+def scatter_metric_options(frame: pd.DataFrame) -> dict[str, str]:
+    options: dict[str, str] = {}
+    for column in PROFILE_SCATTER_COLUMNS:
+        if column in frame and pd.to_numeric(frame[column], errors="coerce").notna().any():
+            options[metric_label(column)] = column
+    return options
+
+
+def default_metric_index(options: dict[str, str], column: str) -> int:
+    values = list(options.values())
+    return values.index(column) if column in values else 0
+
+
+def selected_dataframe_rows(selection: Any, frame: pd.DataFrame) -> pd.DataFrame:
+    selected_rows: list[int] = []
+    selection_state = getattr(selection, "selection", None)
+    if isinstance(selection_state, dict):
+        selected_rows = selection_state.get("rows", [])
+    elif selection_state is not None:
+        selected_rows = getattr(selection_state, "rows", []) or []
+    elif isinstance(selection, dict):
+        selected_rows = selection.get("selection", {}).get("rows", [])
+
+    valid_rows = [int(row) for row in selected_rows if 0 <= int(row) < len(frame)]
+    if not valid_rows:
+        return pd.DataFrame(columns=frame.columns)
+    return frame.iloc[valid_rows].copy()
+
+
 def team_totals_frame(frame: pd.DataFrame) -> pd.DataFrame:
     numeric_columns = [
         "events",
@@ -320,13 +376,12 @@ filtered = filtered.loc[
     & (filtered["explosiveness_z_score"] >= min_explosive_z)
 ]
 
-tab_overview, tab_players, tab_teams, tab_archetypes, tab_matches, tab_tracking, tab_notes = st.tabs([
+tab_overview, tab_players, tab_teams, tab_archetypes, tab_matches, tab_notes = st.tabs([
     "Overview",
     "Players",
     "Teams",
     "Archetypes",
     "Matches",
-    "Tracking",
     "Method Notes",
 ])
 
@@ -357,11 +412,19 @@ with tab_overview:
             st.info("No players match the current filters.")
         else:
             z_view = filtered.copy()
+            axis_options = scatter_metric_options(z_view)
+            axis_cols = st.columns(2)
+            with axis_cols[0]:
+                overview_x_label = st.selectbox("X-axis", list(axis_options), index=default_metric_index(axis_options, "volume_z_score"), key="overview_x_axis")
+            with axis_cols[1]:
+                overview_y_label = st.selectbox("Y-axis", list(axis_options), index=default_metric_index(axis_options, "intensity_z_score"), key="overview_y_axis")
+            overview_x = axis_options[overview_x_label]
+            overview_y = axis_options[overview_y_label]
             z_view["explosive_size"] = (pd.to_numeric(z_view["explosiveness_z_score"], errors="coerce").fillna(0) + 3.2).clip(lower=0.2)
             fig = px.scatter(
                 z_view,
-                x="volume_z_score",
-                y="intensity_z_score",
+                x=overview_x,
+                y=overview_y,
                 size="explosive_size",
                 color="archetype",
                 hover_name="player_name",
@@ -372,11 +435,13 @@ with tab_overview:
                     "explosiveness_z_score": ":.2f",
                     "explosive_size": False,
                 },
-                title="Volume vs intensity, sized by explosiveness",
-                labels={"volume_z_score": "Volume z-score", "intensity_z_score": "Intensity z-score", "archetype": "Archetype"},
+                title=f"{metric_label(overview_x)} vs {metric_label(overview_y)}",
+                labels={overview_x: metric_label(overview_x), overview_y: metric_label(overview_y), "archetype": "Archetype"},
             )
-            fig.add_hline(y=0, line_dash="dot", line_color="#201e1d")
-            fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
+            if overview_y.endswith("_z_score") or overview_y.endswith("_z"):
+                fig.add_hline(y=0, line_dash="dot", line_color="#201e1d")
+            if overview_x.endswith("_z_score") or overview_x.endswith("_z"):
+                fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
             fig.update_layout(height=620, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2")
             st.plotly_chart(fig, width="stretch", key="overview_physical_z_map")
 
@@ -431,20 +496,30 @@ with tab_players:
                 st.plotly_chart(fig, width="stretch", key=f"players_z_bar_{row['player_id']}")
 
         z_pool = table.copy()
+        axis_options = scatter_metric_options(z_pool)
+        axis_cols = st.columns(2)
+        with axis_cols[0]:
+            player_x_label = st.selectbox("X-axis", list(axis_options), index=default_metric_index(axis_options, "volume_z_score"), key="players_x_axis")
+        with axis_cols[1]:
+            player_y_label = st.selectbox("Y-axis", list(axis_options), index=default_metric_index(axis_options, "intensity_z_score"), key="players_y_axis")
+        player_x = axis_options[player_x_label]
+        player_y = axis_options[player_y_label]
         z_pool["explosive_size"] = (pd.to_numeric(z_pool["explosiveness_z_score"], errors="coerce").fillna(0) + 3.2).clip(lower=0.2)
         fig = px.scatter(
             z_pool,
-            x="volume_z_score",
-            y="intensity_z_score",
+            x=player_x,
+            y=player_y,
             size="explosive_size",
             color="position_group",
             hover_name="player_name",
             hover_data={"team_name": True, "profile_z_score": ":.2f", "explosiveness_z_score": ":.2f", "explosive_size": False},
-            title="Physical profile map",
-            labels={"volume_z_score": "Volume z-score", "intensity_z_score": "Intensity z-score", "position_group": "Primary role"},
+            title=f"{metric_label(player_x)} vs {metric_label(player_y)}",
+            labels={player_x: metric_label(player_x), player_y: metric_label(player_y), "position_group": "Primary role"},
         )
-        fig.add_hline(y=0, line_dash="dot", line_color="#201e1d")
-        fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
+        if player_y.endswith("_z_score") or player_y.endswith("_z"):
+            fig.add_hline(y=0, line_dash="dot", line_color="#201e1d")
+        if player_x.endswith("_z_score") or player_x.endswith("_z"):
+            fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
         fig.update_layout(height=560, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2")
         st.plotly_chart(fig, width="stretch", key="players_physical_z_scatter")
 
@@ -595,17 +670,52 @@ with tab_matches:
     if speed_choice != "All speeds":
         match_runs = match_runs.loc[match_runs["speed_avg_band"] == speed_lookup[speed_choice]]
 
-    view_mode = st.radio("Pitch view", ["Action-specific detail", "Dynamic action flows", "Off-ball run paths", "Start-point map"], horizontal=True)
-    selected_event_type = event_lookup.get(event_choice) if event_choice != "All actions" else ""
-    if view_mode == "Action-specific detail" and selected_event_type == "off_ball_run":
-        st.plotly_chart(offball_run_figure(match_runs, title=f"{match_label}: off-ball movement paths"), width="stretch", key=f"matches_offball_detail_{match_id}_{team_filter}_{run_choice}_{speed_choice}")
-    elif view_mode == "Off-ball run paths":
-        st.plotly_chart(offball_run_figure(match_runs, title=f"{match_label}: off-ball run paths"), width="stretch", key=f"matches_offball_paths_{match_id}_{team_filter}_{run_choice}_{speed_choice}")
-    elif view_mode == "Start-point map":
-        st.plotly_chart(pitch_figure(match_events, title=f"{match_label}: action start points"), width="stretch", key=f"matches_start_points_{match_id}_{team_filter}_{event_choice}")
-    else:
-        title_suffix = event_choice.lower() if event_choice != "All actions" else "dynamic action flows"
-        st.plotly_chart(action_flow_figure(match_events, title=f"{match_label}: {title_suffix}"), width="stretch", key=f"matches_action_flow_{match_id}_{team_filter}_{event_choice}")
+    pitch_col, inspect_col = st.columns([1.2, 0.9])
+    selected_runs = pd.DataFrame(columns=match_runs.columns)
+    selected_actions = pd.DataFrame(columns=match_events.columns)
+
+    with inspect_col:
+        st.subheader("Runs To Inspect")
+        if match_runs.empty:
+            st.info("No off-ball runs match the selected filters.")
+        else:
+            run_table = match_runs.sort_values(["dangerous", "received", "xthreat", "distance_covered"], ascending=False).head(16).reset_index(drop=True)
+            run_selection = st.dataframe(
+                run_table,
+                width="stretch",
+                hide_index=True,
+                column_order=["time_start", "player_name", "team_shortname", "run_type_label", "speed_band_label", "distance_covered", "targeted", "received", "dangerous", "xthreat", "phase_label"],
+                column_config=COLUMN_CONFIG,
+                key=f"matches_runs_table_{match_id}",
+                on_select="rerun",
+                selection_mode="multi-row",
+            )
+            selected_runs = selected_dataframe_rows(run_selection, run_table)
+
+        st.subheader("Highest Threat Actions")
+        threat_table = match_events.sort_values("xthreat", ascending=False).head(12).reset_index(drop=True) if "xthreat" in match_events else pd.DataFrame()
+        if threat_table.empty:
+            st.info("No threat-valued actions match the selected filters.")
+        else:
+            action_selection = st.dataframe(
+                threat_table,
+                width="stretch",
+                hide_index=True,
+                column_order=["time_start", "event_label", "player_name", "team_shortname", "event_subtype", "xthreat", "dangerous", "third_start", "third_end"],
+                column_config=COLUMN_CONFIG,
+                key=f"matches_actions_table_{match_id}",
+                on_select="rerun",
+                selection_mode="multi-row",
+            )
+            selected_actions = selected_dataframe_rows(action_selection, threat_table)
+
+    with pitch_col:
+        pitch_title = f"{match_label}: filtered actions and off-ball movement"
+        st.plotly_chart(
+            match_activity_figure(match_events, match_runs, title=pitch_title, highlighted_events=selected_actions, highlighted_runs=selected_runs),
+            width="stretch",
+            key=f"matches_activity_map_{match_id}_{team_filter}_{event_choice}_{run_choice}_{speed_choice}",
+        )
 
     left, right = st.columns([1.05, 0.95])
     with left:
@@ -617,6 +727,7 @@ with tab_matches:
             column_config=COLUMN_CONFIG,
         )
 
+    with right:
         phase_view = phases.loc[phases["match_id"] == match_id].copy()
         if not phase_view.empty:
             phase_counts = phase_view.groupby(["team_in_possession_shortname", "phase_label"], as_index=False)["duration"].sum()
@@ -633,58 +744,6 @@ with tab_matches:
             fig.update_layout(height=420, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", xaxis_title="", yaxis_title="Minutes")
             st.plotly_chart(fig, width="stretch", key=f"matches_phase_minutes_{match_id}")
 
-    with right:
-        st.subheader("Runs To Inspect")
-        if match_runs.empty:
-            st.info("No off-ball runs match the selected filters.")
-        else:
-            run_table = match_runs.sort_values(["dangerous", "received", "xthreat", "distance_covered"], ascending=False)
-            st.dataframe(
-                run_table[["time_start", "player_name", "team_shortname", "run_type_label", "speed_band_label", "distance_covered", "targeted", "received", "dangerous", "xthreat", "phase_label"]].head(16),
-                width="stretch",
-                hide_index=True,
-                column_config=COLUMN_CONFIG,
-            )
-
-        st.subheader("Highest Threat Actions")
-        threat_table = match_events.sort_values("xthreat", ascending=False).head(12) if "xthreat" in match_events else pd.DataFrame()
-        if threat_table.empty:
-            st.info("No threat-valued actions match the selected filters.")
-        else:
-            st.dataframe(
-                threat_table[["time_start", "event_label", "player_name", "team_shortname", "event_subtype", "xthreat", "dangerous", "third_start", "third_end"]],
-                width="stretch",
-                hide_index=True,
-                column_config=COLUMN_CONFIG,
-            )
-
-with tab_tracking:
-    tracking = pd.DataFrame(summary.get("tracking", []))
-    if tracking.empty:
-        st.info("No tracking status metadata found. Run the refresh pipeline.")
-    else:
-        tracking["tracking_label"] = tracking["tracking_status"].map(tracking_label)
-        available_count = int((tracking["tracking_status"] == "available").sum())
-        pointer_count = int((tracking["tracking_status"] == "lfs-pointer").sum())
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Full tracking files", available_count)
-        c2.metric("Git LFS placeholders", pointer_count)
-        c3.metric("Matches checked", len(tracking))
-        st.dataframe(
-            tracking[["match_label", "tracking_label", "tracking_bytes"]],
-            width="stretch",
-            hide_index=True,
-            column_config={
-                "match_label": st.column_config.TextColumn("Match"),
-                "tracking_label": st.column_config.TextColumn("Tracking status"),
-                "tracking_bytes": st.column_config.NumberColumn("Local file size", format="%d bytes"),
-            },
-        )
-        if pointer_count:
-            st.markdown(
-                "<p class='note'>The upstream tracking files are stored with Git LFS. This hosted sample keeps aggregate, phase and dynamic-event analysis fully available, and tracking-specific animation can activate in local checkouts with real JSONL files.</p>",
-                unsafe_allow_html=True,
-            )
 
 with tab_notes:
     st.subheader("Method")
@@ -710,3 +769,31 @@ with tab_notes:
     st.write(
         "The sample is 10 A-League matches plus season aggregate files from SkillCorner Open Data. Raw tracking requires Git LFS and includes the identity and smoothing caveats noted by SkillCorner. The dashboard should be read as a portfolio-grade analytical sample, not a production scouting model."
     )
+
+    tracking = pd.DataFrame(summary.get("tracking", []))
+    st.subheader("Tracking")
+    if tracking.empty:
+        st.info("No tracking status metadata found. Run the refresh pipeline.")
+    else:
+        tracking["tracking_label"] = tracking["tracking_status"].map(tracking_label)
+        available_count = int((tracking["tracking_status"] == "available").sum())
+        pointer_count = int((tracking["tracking_status"] == "lfs-pointer").sum())
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Full tracking files", available_count)
+        c2.metric("Git LFS placeholders", pointer_count)
+        c3.metric("Matches checked", len(tracking))
+        st.dataframe(
+            tracking[["match_label", "tracking_label", "tracking_bytes"]],
+            width="stretch",
+            hide_index=True,
+            column_config={
+                "match_label": st.column_config.TextColumn("Match"),
+                "tracking_label": st.column_config.TextColumn("Tracking status"),
+                "tracking_bytes": st.column_config.NumberColumn("Local file size", format="%d bytes"),
+            },
+        )
+        if pointer_count:
+            st.markdown(
+                "<p class='note'>The upstream tracking files are stored with Git LFS. This hosted sample keeps aggregate, phase and dynamic-event analysis fully available, and tracking-specific animation can activate in local checkouts with real JSONL files.</p>",
+                unsafe_allow_html=True,
+            )

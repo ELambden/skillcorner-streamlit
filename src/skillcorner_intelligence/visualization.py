@@ -45,6 +45,12 @@ def _numeric_coordinates(frame: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
+def _numeric_series(frame: pd.DataFrame, column: str, default: float = 0.0) -> pd.Series:
+    if column not in frame:
+        return pd.Series(default, index=frame.index, dtype="float64")
+    return pd.to_numeric(frame[column], errors="coerce").fillna(default)
+
+
 def _ranked_sample(frame: pd.DataFrame, max_rows: int) -> pd.DataFrame:
     if len(frame) <= max_rows:
         return frame
@@ -146,7 +152,7 @@ def action_flow_figure(events: pd.DataFrame, title: str = "Dynamic Action Flow",
     point_frame = frame.copy()
     point_frame["marker_x"] = point_frame["flow_x_end"].fillna(point_frame["flow_x_start"])
     point_frame["marker_y"] = point_frame["flow_y_end"].fillna(point_frame["flow_y_start"])
-    point_frame["marker_size"] = 8 + pd.to_numeric(point_frame.get("dangerous", 0), errors="coerce").fillna(0) * 5 + pd.to_numeric(point_frame.get("xthreat", 0), errors="coerce").fillna(0).clip(lower=0) * 30
+    point_frame["marker_size"] = 8 + _numeric_series(point_frame, "dangerous") * 5 + _numeric_series(point_frame, "xthreat").clip(lower=0) * 30
 
     points = px.scatter(
         point_frame,
@@ -195,7 +201,7 @@ def offball_run_figure(runs: pd.DataFrame, title: str = "Off-ball Run Map", max_
         ))
 
     hover = [column for column in ["player_name", "team_shortname", "event_subtype", "speed_avg_band", "distance_covered", "targeted", "received", "dangerous", "xthreat"] if column in frame]
-    marker_size = 9 + pd.to_numeric(frame.get("dangerous", 0), errors="coerce").fillna(0) * 5
+    marker_size = 9 + _numeric_series(frame, "dangerous") * 5
     points = px.scatter(
         frame,
         x="x_end",
@@ -209,6 +215,239 @@ def offball_run_figure(runs: pd.DataFrame, title: str = "Off-ball Run Map", max_
     for trace in points.data:
         trace.showlegend = False
         fig.add_trace(trace)
+    return fig
+
+
+def _float_or_none(value: object) -> float | None:
+    numeric = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    if pd.isna(numeric):
+        return None
+    return float(numeric)
+
+
+def _display_value(value: object) -> str:
+    if value is None or pd.isna(value):
+        return ""
+    if isinstance(value, float):
+        return f"{value:.3f}".rstrip("0").rstrip(".")
+    return str(value)
+
+
+def _hover_text(row: pd.Series, columns: list[str]) -> str:
+    parts = []
+    for column in columns:
+        if column in row and _display_value(row[column]):
+            parts.append(f"{column.replace('_', ' ').title()}: {_display_value(row[column])}")
+    return "<br>".join(parts)
+
+
+def _event_flow_frame(events: pd.DataFrame, max_events: int) -> pd.DataFrame:
+    frame = _numeric_coordinates(events).copy()
+    if frame.empty:
+        return frame
+    if "event_label" not in frame and "event_type" in frame:
+        frame["event_label"] = frame["event_type"].map(event_label)
+    if "event_label" not in frame:
+        frame["event_label"] = "Action"
+
+    frame = _ranked_sample(frame, max_events)
+    frame["flow_x_start"] = frame.get("x_start")
+    frame["flow_y_start"] = frame.get("y_start")
+    frame["flow_x_end"] = frame.get("x_end")
+    frame["flow_y_end"] = frame.get("y_end")
+
+    if "event_type" in frame:
+        passing = frame["event_type"].eq("passing_option")
+        if {"player_in_possession_x_start", "player_in_possession_y_start"} <= set(frame.columns):
+            frame.loc[passing, "flow_x_start"] = frame.loc[passing, "player_in_possession_x_start"].fillna(frame.loc[passing, "x_start"])
+            frame.loc[passing, "flow_y_start"] = frame.loc[passing, "player_in_possession_y_start"].fillna(frame.loc[passing, "y_start"])
+            frame.loc[passing, "flow_x_end"] = frame.loc[passing, "x_start"]
+            frame.loc[passing, "flow_y_end"] = frame.loc[passing, "y_start"]
+
+    return frame.dropna(subset=["flow_x_start", "flow_y_start"])
+
+
+def _add_action_flow_layers(fig: go.Figure, events: pd.DataFrame, max_events: int, opacity_scale: float = 1.0) -> None:
+    frame = _event_flow_frame(events, max_events)
+    if frame.empty:
+        return
+
+    has_end = frame[["flow_x_end", "flow_y_end"]].notna().all(axis=1)
+    for label, group in frame.loc[has_end].groupby("event_label", dropna=False):
+        color = EVENT_COLORS.get(str(label), "#0088b0")
+        xs: list[float | None] = []
+        ys: list[float | None] = []
+        for row in group.itertuples(index=False):
+            xs.extend([float(row.flow_x_start), float(row.flow_x_end), None])
+            ys.extend([float(row.flow_y_start), float(row.flow_y_end), None])
+        fig.add_trace(go.Scatter(
+            x=xs,
+            y=ys,
+            mode="lines",
+            line={"color": color, "width": 2},
+            opacity=0.54 * opacity_scale,
+            name=str(label),
+            hoverinfo="skip",
+        ))
+
+    hover_columns = [column for column in ["time_start", "event_label", "player_name", "player_in_possession_name", "team_shortname", "event_subtype", "speed_avg_band", "distance_covered", "xthreat", "dangerous", "received", "targeted", "third_start", "third_end"] if column in frame]
+    point_frame = frame.copy()
+    point_frame["marker_x"] = point_frame["flow_x_end"].fillna(point_frame["flow_x_start"])
+    point_frame["marker_y"] = point_frame["flow_y_end"].fillna(point_frame["flow_y_start"])
+    point_frame["marker_size"] = 8 + _numeric_series(point_frame, "dangerous") * 5 + _numeric_series(point_frame, "xthreat").clip(lower=0) * 30
+
+    points = px.scatter(
+        point_frame,
+        x="marker_x",
+        y="marker_y",
+        color="event_label",
+        size="marker_size",
+        hover_data=hover_columns,
+        opacity=0.82 * opacity_scale,
+        labels={"event_label": "Action type"},
+    )
+    for trace in points.data:
+        trace.marker.line = {"width": 1, "color": "white"}
+        fig.add_trace(trace)
+
+
+def _add_run_layers(fig: go.Figure, runs: pd.DataFrame, max_runs: int, opacity_scale: float = 1.0) -> None:
+    frame = _numeric_coordinates(runs).dropna(subset=["x_start", "y_start", "x_end", "y_end"])
+    if len(frame) > max_runs:
+        frame = frame.sort_values(["dangerous", "received", "distance_covered"], ascending=False).head(max_runs)
+    if frame.empty:
+        return
+
+    if "speed_avg_band" not in frame:
+        frame["speed_avg_band"] = "run"
+    frame["speed_avg_band"] = frame["speed_avg_band"].fillna("run").astype(str)
+    frame["run_label"] = frame["speed_avg_band"].str.replace("_", " ").str.title()
+
+    for speed_band, group in frame.groupby("speed_avg_band", dropna=False):
+        color = SPEED_COLORS.get(str(speed_band).lower(), "#0088b0")
+        xs: list[float | None] = []
+        ys: list[float | None] = []
+        for row in group.itertuples(index=False):
+            xs.extend([float(row.x_start), float(row.x_end), None])
+            ys.extend([float(row.y_start), float(row.y_end), None])
+        fig.add_trace(go.Scatter(
+            x=xs,
+            y=ys,
+            mode="lines",
+            line={"color": color, "width": 2, "dash": "solid"},
+            opacity=0.62 * opacity_scale,
+            name=f"Run: {str(speed_band).replace('_', ' ').title()}",
+            hoverinfo="skip",
+        ))
+
+    hover = [column for column in ["player_name", "team_shortname", "event_subtype", "speed_avg_band", "distance_covered", "targeted", "received", "dangerous", "xthreat"] if column in frame]
+    marker_size = 8 + _numeric_series(frame, "dangerous") * 5
+    points = px.scatter(
+        frame,
+        x="x_end",
+        y="y_end",
+        color="run_label",
+        size=marker_size,
+        hover_data=hover,
+        opacity=0.78 * opacity_scale,
+        labels={"run_label": "Speed band"},
+    )
+    for trace in points.data:
+        trace.showlegend = False
+        trace.marker.symbol = "diamond"
+        trace.marker.line = {"width": 1, "color": "white"}
+        fig.add_trace(trace)
+
+
+def _add_highlight_trace(fig: go.Figure, row: pd.Series, start_columns: tuple[str, str], end_columns: tuple[str, str], name: str, color: str) -> None:
+    x_start = _float_or_none(row.get(start_columns[0]))
+    y_start = _float_or_none(row.get(start_columns[1]))
+    x_end = _float_or_none(row.get(end_columns[0]))
+    y_end = _float_or_none(row.get(end_columns[1]))
+    if x_start is None or y_start is None:
+        return
+
+    if x_end is None or y_end is None:
+        x_end = x_start
+        y_end = y_start
+
+    hover_text = _hover_text(row, ["time_start", "event_label", "player_name", "player_in_possession_name", "team_shortname", "event_subtype", "speed_avg_band", "distance_covered", "targeted", "received", "dangerous", "xthreat", "third_start", "third_end"])
+    fig.add_trace(go.Scatter(
+        x=[x_start, x_end],
+        y=[y_start, y_end],
+        mode="lines",
+        line={"color": "#201e1d", "width": 9},
+        hoverinfo="skip",
+        showlegend=False,
+    ))
+    fig.add_trace(go.Scatter(
+        x=[x_start, x_end],
+        y=[y_start, y_end],
+        mode="lines+markers",
+        line={"color": color, "width": 5},
+        marker={"size": [11, 18], "symbol": ["circle", "star"], "color": color, "line": {"color": "#201e1d", "width": 2}},
+        name=name,
+        text=[hover_text, hover_text],
+        hovertemplate="%{text}<extra></extra>",
+    ))
+
+
+def _highlight_frame(selection: pd.DataFrame | pd.Series | None) -> pd.DataFrame:
+    if selection is None:
+        return pd.DataFrame()
+    if isinstance(selection, pd.Series):
+        return selection.to_frame().T
+    return selection.copy()
+
+
+def _add_highlighted_event(fig: go.Figure, event: pd.Series) -> None:
+    row = _numeric_coordinates(event.to_frame().T).iloc[0]
+    if row.get("event_type") == "passing_option" and pd.notna(row.get("player_in_possession_x_start")) and pd.notna(row.get("player_in_possession_y_start")):
+        row["highlight_x_start"] = row.get("player_in_possession_x_start")
+        row["highlight_y_start"] = row.get("player_in_possession_y_start")
+        row["highlight_x_end"] = row.get("x_start")
+        row["highlight_y_end"] = row.get("y_start")
+        _add_highlight_trace(fig, row, ("highlight_x_start", "highlight_y_start"), ("highlight_x_end", "highlight_y_end"), "Selected action", "#fffb00")
+        return
+    _add_highlight_trace(fig, row, ("x_start", "y_start"), ("x_end", "y_end"), "Selected action", "#fffb00")
+
+
+def _add_highlighted_run(fig: go.Figure, run: pd.Series) -> None:
+    row = _numeric_coordinates(run.to_frame().T).iloc[0]
+    _add_highlight_trace(fig, row, ("x_start", "y_start"), ("x_end", "y_end"), "Selected run", "#ffffff")
+
+
+def _add_highlighted_events(fig: go.Figure, events: pd.DataFrame | pd.Series | None) -> None:
+    frame = _highlight_frame(events)
+    for _, event in frame.iterrows():
+        _add_highlighted_event(fig, event)
+
+
+def _add_highlighted_runs(fig: go.Figure, runs: pd.DataFrame | pd.Series | None) -> None:
+    frame = _highlight_frame(runs)
+    for _, run in frame.iterrows():
+        _add_highlighted_run(fig, run)
+
+
+def match_activity_figure(
+    events: pd.DataFrame,
+    runs: pd.DataFrame,
+    title: str = "Match Activity Map",
+    highlighted_events: pd.DataFrame | pd.Series | None = None,
+    highlighted_runs: pd.DataFrame | pd.Series | None = None,
+    max_events: int = 550,
+    max_runs: int = 350,
+) -> go.Figure:
+    fig = _base_pitch(title)
+    event_frame = events.copy()
+    if not runs.empty and "event_type" in event_frame:
+        event_frame = event_frame.loc[~event_frame["event_type"].eq("off_ball_run")]
+    has_highlight = not _highlight_frame(highlighted_events).empty or not _highlight_frame(highlighted_runs).empty
+    opacity_scale = 0.1 if has_highlight else 1.0
+    _add_action_flow_layers(fig, event_frame, max_events, opacity_scale=opacity_scale)
+    _add_run_layers(fig, runs, max_runs, opacity_scale=opacity_scale)
+    _add_highlighted_events(fig, highlighted_events)
+    _add_highlighted_runs(fig, highlighted_runs)
     return fig
 
 

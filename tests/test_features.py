@@ -2,6 +2,7 @@ import pandas as pd
 
 from skillcorner_intelligence.analytics import consolidate_player_aggregate
 from skillcorner_intelligence.features import add_composite_scores, add_metric_derivatives, add_zscore_composite_scores, assign_archetypes, percentile_by_position, zscore_by_position
+from skillcorner_intelligence.visualization import match_activity_figure
 
 
 def test_position_percentiles_are_grouped() -> None:
@@ -78,3 +79,44 @@ def test_zscore_composite_scores_center_on_position_average() -> None:
     means = scored.groupby("position_group")["intensity_z_score"].mean().round(6).abs()
     assert means.eq(0).all()
     assert scored["intensity_z_score"].iloc[2] > scored["intensity_z_score"].iloc[0]
+
+
+def test_match_activity_figure_highlights_selected_rows() -> None:
+    events = pd.DataFrame({
+        "event_type": ["passing_option"],
+        "event_label": ["Available passing lane"],
+        "time_start": ["12:34.5"],
+        "player_name": ["Runner"],
+        "player_in_possession_name": ["Carrier"],
+        "team_shortname": ["AFC"],
+        "player_in_possession_x_start": [-10.0],
+        "player_in_possession_y_start": [4.0],
+        "x_start": [8.0],
+        "y_start": [12.0],
+        "x_end": [8.0],
+        "y_end": [12.0],
+        "xthreat": [0.12],
+    })
+    runs = pd.DataFrame({
+        "event_type": ["off_ball_run"],
+        "time_start": ["12:35.0"],
+        "player_name": ["Runner"],
+        "team_shortname": ["AFC"],
+        "event_subtype": ["behind"],
+        "speed_avg_band": ["hsr"],
+        "x_start": [5.0],
+        "y_start": [10.0],
+        "x_end": [20.0],
+        "y_end": [14.0],
+        "distance_covered": [15.5],
+        "xthreat": [0.08],
+    })
+
+    fig = match_activity_figure(events, runs, highlighted_events=events, highlighted_runs=runs)
+    trace_names = [trace.name for trace in fig.data]
+    base_opacities = [trace.opacity for trace in fig.data if trace.name not in {"Selected action", "Selected run"} and trace.opacity is not None]
+
+    assert "Selected action" in trace_names
+    assert "Selected run" in trace_names
+    assert base_opacities
+    assert max(base_opacities) <= 0.082
