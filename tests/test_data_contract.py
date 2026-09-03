@@ -84,5 +84,6 @@ def test_match_intelligence_exports_full_dynamic_event_views() -> None:
     team_matches = pd.read_csv(MATCH_TEAM_SUMMARY_CSV)
     assert len(events) > 6000
     assert {"on_ball_engagement", "off_ball_run", "passing_option", "player_possession"} <= set(events["event_type"].dropna())
+    assert {"player_in_possession_x_start", "player_in_possession_y_start"} <= set(events.columns)
     assert {"event_subtype", "speed_avg_band", "distance_covered", "high_intensity"} <= set(offball.columns)
     assert {"high_intensity_runs", "xthreat_total", "longest_run_player"} <= set(team_matches.columns)

@@ -33,7 +33,7 @@ from skillcorner_intelligence.presentation import (
     speed_band_label,
     tracking_label,
 )
-from skillcorner_intelligence.visualization import offball_run_figure, pitch_figure, radar_figure
+from skillcorner_intelligence.visualization import action_flow_figure, offball_run_figure, pitch_figure, radar_figure
 
 st.set_page_config(page_title="SkillCorner Football Intelligence Lab", layout="wide")
 
@@ -423,11 +423,17 @@ with tab_matches:
     if speed_choice != "All speeds":
         match_runs = match_runs.loc[match_runs["speed_avg_band"] == speed_lookup[speed_choice]]
 
-    view_mode = st.radio("Pitch view", ["Dynamic actions", "Off-ball run paths"], horizontal=True)
-    if view_mode == "Dynamic actions":
-        st.plotly_chart(pitch_figure(match_events, title=f"{match_label}: dynamic actions"), width="stretch")
-    else:
+    view_mode = st.radio("Pitch view", ["Action-specific detail", "Dynamic action flows", "Off-ball run paths", "Start-point map"], horizontal=True)
+    selected_event_type = event_lookup.get(event_choice) if event_choice != "All actions" else ""
+    if view_mode == "Action-specific detail" and selected_event_type == "off_ball_run":
+        st.plotly_chart(offball_run_figure(match_runs, title=f"{match_label}: off-ball movement paths"), width="stretch")
+    elif view_mode == "Off-ball run paths":
         st.plotly_chart(offball_run_figure(match_runs, title=f"{match_label}: off-ball run paths"), width="stretch")
+    elif view_mode == "Start-point map":
+        st.plotly_chart(pitch_figure(match_events, title=f"{match_label}: action start points"), width="stretch")
+    else:
+        title_suffix = event_choice.lower() if event_choice != "All actions" else "dynamic action flows"
+        st.plotly_chart(action_flow_figure(match_events, title=f"{match_label}: {title_suffix}"), width="stretch")
 
     left, right = st.columns([1.05, 0.95])
     with left:

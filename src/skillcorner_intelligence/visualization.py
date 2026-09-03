@@ -11,6 +11,12 @@ PITCH_WIDTH = 68
 PITCH_BG = "#5d7f67"
 PAGE_BG = "#f3f2f2"
 LINE_COLOR = "#f3f2f2"
+EVENT_COLORS = {
+    "In-possession action": "#edbb00",
+    "Off-ball movement": "#d6006c",
+    "Available passing lane": "#7acbff",
+    "Defensive pressure": "#201e1d",
+}
 SPEED_COLORS = {
     "walking": "#7acbff",
     "jogging": "#7acbff",
@@ -23,10 +29,31 @@ SPEED_COLORS = {
 
 def _numeric_coordinates(frame: pd.DataFrame) -> pd.DataFrame:
     result = frame.copy()
-    for column in ["x_start", "y_start", "x_end", "y_end"]:
+    coordinate_columns = [
+        "x_start",
+        "y_start",
+        "x_end",
+        "y_end",
+        "player_in_possession_x_start",
+        "player_in_possession_y_start",
+        "player_in_possession_x_end",
+        "player_in_possession_y_end",
+    ]
+    for column in coordinate_columns:
         if column in result:
             result[column] = pd.to_numeric(result[column], errors="coerce")
     return result
+
+
+def _ranked_sample(frame: pd.DataFrame, max_rows: int) -> pd.DataFrame:
+    if len(frame) <= max_rows:
+        return frame
+    result = frame.copy()
+    for column in ["dangerous", "received", "xthreat", "distance_covered"]:
+        if column not in result:
+            result[column] = 0
+        result[column] = pd.to_numeric(result[column], errors="coerce").fillna(0)
+    return result.sort_values(["dangerous", "received", "xthreat", "distance_covered"], ascending=False).head(max_rows)
 
 
 def _base_pitch(title: str, height: int = 560) -> go.Figure:
@@ -66,6 +93,74 @@ def pitch_figure(events: pd.DataFrame, title: str = "Dynamic Event Map") -> go.F
         )
         for trace in scatter.data:
             fig.add_trace(trace)
+    return fig
+
+
+def action_flow_figure(events: pd.DataFrame, title: str = "Dynamic Action Flow", max_events: int = 650) -> go.Figure:
+    frame = _numeric_coordinates(events).copy()
+    if frame.empty:
+        return _base_pitch(title)
+    if "event_label" not in frame and "event_type" in frame:
+        frame["event_label"] = frame["event_type"].map(event_label)
+    if "event_label" not in frame:
+        frame["event_label"] = "Action"
+
+    frame = _ranked_sample(frame, max_events)
+    frame["flow_x_start"] = frame.get("x_start")
+    frame["flow_y_start"] = frame.get("y_start")
+    frame["flow_x_end"] = frame.get("x_end")
+    frame["flow_y_end"] = frame.get("y_end")
+
+    if "event_type" in frame:
+        passing = frame["event_type"].eq("passing_option")
+        if {"player_in_possession_x_start", "player_in_possession_y_start"} <= set(frame.columns):
+            frame.loc[passing, "flow_x_start"] = frame.loc[passing, "player_in_possession_x_start"].fillna(frame.loc[passing, "x_start"])
+            frame.loc[passing, "flow_y_start"] = frame.loc[passing, "player_in_possession_y_start"].fillna(frame.loc[passing, "y_start"])
+            frame.loc[passing, "flow_x_end"] = frame.loc[passing, "x_start"]
+            frame.loc[passing, "flow_y_end"] = frame.loc[passing, "y_start"]
+
+    frame = frame.dropna(subset=["flow_x_start", "flow_y_start"])
+    fig = _base_pitch(title)
+    if frame.empty:
+        return fig
+
+    has_end = frame[["flow_x_end", "flow_y_end"]].notna().all(axis=1)
+    for label, group in frame.loc[has_end].groupby("event_label", dropna=False):
+        color = EVENT_COLORS.get(str(label), "#0088b0")
+        xs: list[float | None] = []
+        ys: list[float | None] = []
+        for row in group.itertuples(index=False):
+            xs.extend([float(row.flow_x_start), float(row.flow_x_end), None])
+            ys.extend([float(row.flow_y_start), float(row.flow_y_end), None])
+        fig.add_trace(go.Scatter(
+            x=xs,
+            y=ys,
+            mode="lines",
+            line={"color": color, "width": 2},
+            opacity=0.62,
+            name=str(label),
+            hoverinfo="skip",
+        ))
+
+    hover_columns = [column for column in ["time_start", "event_label", "player_name", "player_in_possession_name", "team_shortname", "event_subtype", "speed_avg_band", "distance_covered", "xthreat", "dangerous", "received", "targeted", "third_start", "third_end"] if column in frame]
+    point_frame = frame.copy()
+    point_frame["marker_x"] = point_frame["flow_x_end"].fillna(point_frame["flow_x_start"])
+    point_frame["marker_y"] = point_frame["flow_y_end"].fillna(point_frame["flow_y_start"])
+    point_frame["marker_size"] = 8 + pd.to_numeric(point_frame.get("dangerous", 0), errors="coerce").fillna(0) * 5 + pd.to_numeric(point_frame.get("xthreat", 0), errors="coerce").fillna(0).clip(lower=0) * 30
+
+    points = px.scatter(
+        point_frame,
+        x="marker_x",
+        y="marker_y",
+        color="event_label",
+        size="marker_size",
+        hover_data=hover_columns,
+        opacity=0.84,
+        labels={"event_label": "Action type"},
+    )
+    for trace in points.data:
+        trace.marker.line = {"width": 1, "color": "white"}
+        fig.add_trace(trace)
     return fig
 
 
