@@ -351,7 +351,7 @@ with tab_overview:
             title="Top consolidated player profiles in the current filter",
         )
         fig.update_layout(height=620, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Overall profile")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="overview_top_profiles_chart")
     with right:
         if filtered.empty:
             st.info("No players match the current filters.")
@@ -378,7 +378,7 @@ with tab_overview:
             fig.add_hline(y=0, line_dash="dot", line_color="#201e1d")
             fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
             fig.update_layout(height=620, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", key="overview_physical_z_map")
 
 with tab_players:
     search = st.text_input("Search player, club, role or archetype", "")
@@ -410,7 +410,7 @@ with tab_players:
             left, right = st.columns([0.8, 1.2])
             with left:
                 st.caption(f"{row['team_name']} - {row['position_group']} - {row['archetype']} - {float(row['minutes']):.0f} evidence minutes")
-                st.plotly_chart(radar_figure(row), width="stretch")
+                st.plotly_chart(radar_figure(row), width="stretch", key=f"players_radar_{row['player_id']}")
             with right:
                 z_rows = pd.DataFrame([
                     {"Metric group": SCORE_LABELS[column], "Z-score": float(row[column])}
@@ -428,7 +428,7 @@ with tab_players:
                 )
                 fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
                 fig.update_layout(height=420, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Z-score vs primary role average")
-                st.plotly_chart(fig, width="stretch")
+                st.plotly_chart(fig, width="stretch", key=f"players_z_bar_{row['player_id']}")
 
         z_pool = table.copy()
         z_pool["explosive_size"] = (pd.to_numeric(z_pool["explosiveness_z_score"], errors="coerce").fillna(0) + 3.2).clip(lower=0.2)
@@ -446,7 +446,7 @@ with tab_players:
         fig.add_hline(y=0, line_dash="dot", line_color="#201e1d")
         fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
         fig.update_layout(height=560, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="players_physical_z_scatter")
 
 with tab_teams:
     team_totals = team_totals_frame(match_teams)
@@ -464,7 +464,7 @@ with tab_teams:
                 labels={"xthreat_total": "Threat value", "team_name": "Team"},
             )
             fig.update_layout(height=520, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Threat value")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", key="teams_threat_bar")
         with c2:
             fig = px.scatter(
                 team_totals,
@@ -478,7 +478,7 @@ with tab_teams:
                 labels={"high_intensity_runs": "High-intensity runs", "xthreat_total": "Threat value", "dangerous_events": "Dangerous actions"},
             )
             fig.update_layout(height=520, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", key="teams_intensity_threat_scatter")
         st.dataframe(
             team_totals.sort_values("xthreat_total", ascending=False),
             width="stretch",
@@ -497,7 +497,7 @@ with tab_archetypes:
         archetype_counts.columns = ["Archetype", "Players"]
         fig = px.bar(archetype_counts, x="Players", y="Archetype", orientation="h", title="Archetype mix in the current filter")
         fig.update_layout(height=360, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Players")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="archetypes_mix_chart")
     with guide_right:
         st.subheader("Score Shape")
         score_mix = filtered[SCORE_COLUMNS].mean().reset_index()
@@ -505,7 +505,7 @@ with tab_archetypes:
         score_mix["Score"] = score_mix["Score"].map(lambda value: SCORE_LABELS.get(value, value))
         fig = px.bar(score_mix, x="Average", y="Score", orientation="h", range_x=[0, 100], title="Average score family in current filter")
         fig.update_layout(height=360, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Position-group percentile score")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="archetypes_score_shape_chart")
 
     player_labels = filtered["profile_key"].tolist()
     selected_label = st.selectbox("Inspect player", player_labels if player_labels else [""])
@@ -518,7 +518,7 @@ with tab_archetypes:
         with left:
             st.subheader(row["player_name"])
             st.caption(f"{row['team_name']} - {row['position_group']} - {row['archetype']} - {float(row['minutes']):.0f} evidence minutes")
-            st.plotly_chart(radar_figure(row), width="stretch")
+            st.plotly_chart(radar_figure(row), width="stretch", key=f"archetypes_radar_{row['player_id']}")
             render_archetype_panel(str(row["archetype"]))
         with right:
             profile_scores = pd.DataFrame([
@@ -527,7 +527,7 @@ with tab_archetypes:
             ])
             fig = px.bar(profile_scores, x="Score", y="Score family", orientation="h", range_x=[0, 100], title="Why this profile stands out")
             fig.update_layout(height=360, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Position-group percentile score")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", key=f"archetypes_score_bar_{row['player_id']}")
 
             map_fig = px.scatter(
                 filtered,
@@ -542,7 +542,7 @@ with tab_archetypes:
             )
             map_fig.add_scatter(x=[row["map_x"]], y=[row["map_y"]], mode="markers", marker={"size": 18, "color": "#201e1d", "symbol": "x"}, name="Selected")
             map_fig.update_layout(height=480, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", xaxis_title="Profile map axis 1", yaxis_title="Profile map axis 2")
-            st.plotly_chart(map_fig, width="stretch")
+            st.plotly_chart(map_fig, width="stretch", key="archetypes_role_map")
 
         comp = filtered.copy()
         for column in SCORE_COLUMNS:
@@ -598,14 +598,14 @@ with tab_matches:
     view_mode = st.radio("Pitch view", ["Action-specific detail", "Dynamic action flows", "Off-ball run paths", "Start-point map"], horizontal=True)
     selected_event_type = event_lookup.get(event_choice) if event_choice != "All actions" else ""
     if view_mode == "Action-specific detail" and selected_event_type == "off_ball_run":
-        st.plotly_chart(offball_run_figure(match_runs, title=f"{match_label}: off-ball movement paths"), width="stretch")
+        st.plotly_chart(offball_run_figure(match_runs, title=f"{match_label}: off-ball movement paths"), width="stretch", key=f"matches_offball_detail_{match_id}_{team_filter}_{run_choice}_{speed_choice}")
     elif view_mode == "Off-ball run paths":
-        st.plotly_chart(offball_run_figure(match_runs, title=f"{match_label}: off-ball run paths"), width="stretch")
+        st.plotly_chart(offball_run_figure(match_runs, title=f"{match_label}: off-ball run paths"), width="stretch", key=f"matches_offball_paths_{match_id}_{team_filter}_{run_choice}_{speed_choice}")
     elif view_mode == "Start-point map":
-        st.plotly_chart(pitch_figure(match_events, title=f"{match_label}: action start points"), width="stretch")
+        st.plotly_chart(pitch_figure(match_events, title=f"{match_label}: action start points"), width="stretch", key=f"matches_start_points_{match_id}_{team_filter}_{event_choice}")
     else:
         title_suffix = event_choice.lower() if event_choice != "All actions" else "dynamic action flows"
-        st.plotly_chart(action_flow_figure(match_events, title=f"{match_label}: {title_suffix}"), width="stretch")
+        st.plotly_chart(action_flow_figure(match_events, title=f"{match_label}: {title_suffix}"), width="stretch", key=f"matches_action_flow_{match_id}_{team_filter}_{event_choice}")
 
     left, right = st.columns([1.05, 0.95])
     with left:
@@ -631,7 +631,7 @@ with tab_matches:
                 labels={"phase_label": "Attacking phase", "minutes": "Minutes", "team_in_possession_shortname": "Club"},
             )
             fig.update_layout(height=420, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", xaxis_title="", yaxis_title="Minutes")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", key=f"matches_phase_minutes_{match_id}")
 
     with right:
         st.subheader("Runs To Inspect")

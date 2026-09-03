@@ -1,3 +1,4 @@
+import ast
 import json
 from pathlib import Path
 
@@ -91,3 +92,22 @@ def test_match_intelligence_exports_full_dynamic_event_views() -> None:
     assert {"player_in_possession_x_start", "player_in_possession_y_start"} <= set(events.columns)
     assert {"event_subtype", "speed_avg_band", "distance_covered", "high_intensity"} <= set(offball.columns)
     assert {"high_intensity_runs", "xthreat_total", "longest_run_player"} <= set(team_matches.columns)
+
+
+def test_streamlit_plotly_charts_have_explicit_keys() -> None:
+    app = Path("app/streamlit_app.py").read_text(encoding="utf-8")
+    tree = ast.parse(app)
+
+    plotly_calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "plotly_chart"
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "st"
+    ]
+
+    assert plotly_calls
+    for call in plotly_calls:
+        assert any(keyword.arg == "key" for keyword in call.keywords), f"Missing key at line {call.lineno}"
