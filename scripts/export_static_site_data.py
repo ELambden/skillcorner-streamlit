@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from skillcorner_intelligence.paths import ANALYSIS_JSON, MATCH_SUMMARY_CSV, PLAYER_PROFILES_CSV, STATIC_JSON, TEAM_SUMMARY_CSV
 
-STREAMLIT_APP_URL = "https://skillcorner-football-intelligence.streamlit.app/?embed=true"
+STREAMLIT_APP_URL = "https://skillcorner-app-m6j5idxghzigicecvxbchr.streamlit.app/?embed=true"
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
