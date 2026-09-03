@@ -17,7 +17,15 @@ from .data import (
     load_phases,
     tracking_status,
 )
-from .features import COMPOSITE_INPUTS, METRIC_GLOSSARY, add_composite_scores, add_metric_derivatives, assign_archetypes, to_numeric
+from .features import (
+    COMPOSITE_INPUTS,
+    METRIC_GLOSSARY,
+    add_composite_scores,
+    add_metric_derivatives,
+    add_zscore_composite_scores,
+    assign_archetypes,
+    to_numeric,
+)
 from .presentation import ARCHETYPE_DEFINITIONS, EVENT_TYPE_LABELS, IN_POSSESSION_PHASE_LABELS, TRACKING_STATUS_LABELS
 from .paths import (
     ANALYSIS_JSON,
@@ -312,10 +320,11 @@ def build_player_profiles() -> pd.DataFrame:
 
     metric_columns = sorted({column for columns in COMPOSITE_INPUTS.values() for column in columns if column in profiles})
     profiles = add_metric_derivatives(profiles, metric_columns)
+    profiles = add_zscore_composite_scores(profiles)
     profiles = add_composite_scores(profiles)
     profiles = assign_archetypes(profiles)
 
-    pca_columns = ["athletic_load_score", "sprint_threat_score", "off_ball_threat_score", "passing_progression_score", "reliability_score"]
+    pca_columns = ["intensity_z_score", "volume_z_score", "explosiveness_z_score", "movement_z_score", "progression_z_score", "profile_z_score"]
     if len(profiles) >= 3:
         scaled = StandardScaler().fit_transform(profiles[pca_columns])
         components = PCA(n_components=2, random_state=42).fit_transform(scaled)
@@ -499,8 +508,9 @@ def write_outputs() -> dict[str, Any]:
             "tracking": TRACKING_STATUS_LABELS,
         },
         "topPlayers": profiles.head(10)[[
-            "player_name", "team_name", "position_group", "profile_score", "archetype",
+            "player_name", "team_name", "position_group", "profile_score", "profile_z_score", "archetype",
             "athletic_load_score", "off_ball_threat_score", "passing_progression_score",
+            "intensity_z_score", "volume_z_score", "explosiveness_z_score", "movement_z_score", "progression_z_score",
         ]].to_dict("records"),
         "tracking": match_summary[["match_id", "match_label", "tracking_status", "tracking_bytes"]].to_dict("records") if not match_summary.empty else [],
     }

@@ -1,7 +1,7 @@
 import pandas as pd
 
 from skillcorner_intelligence.analytics import consolidate_player_aggregate
-from skillcorner_intelligence.features import add_composite_scores, assign_archetypes, percentile_by_position, zscore_by_position
+from skillcorner_intelligence.features import add_composite_scores, add_metric_derivatives, add_zscore_composite_scores, assign_archetypes, percentile_by_position, zscore_by_position
 
 
 def test_position_percentiles_are_grouped() -> None:
@@ -56,3 +56,25 @@ def test_consolidate_player_aggregate_combines_context_rows() -> None:
     assert first["position_groups"] == "Midfield; Wide Attacker"
     assert first["psv99"] == 32
     assert round(first["total_metersperminute_full_all"], 2) == 104.29
+
+
+def test_zscore_composite_scores_center_on_position_average() -> None:
+    frame = pd.DataFrame({
+        "position_group": ["Midfield", "Midfield", "Midfield", "Full Back", "Full Back", "Full Back"],
+        "minutes": [900, 900, 900, 900, 900, 900],
+        "hi_count_full_all": [10, 20, 30, 5, 10, 15],
+        "total_metersperminute_full_all": [80, 100, 120, 70, 80, 90],
+        "hsr_distance_full_all": [100, 200, 300, 80, 100, 120],
+        "psv99": [25, 30, 35, 24, 26, 28],
+        "total_distance_full_all": [8000, 9000, 10000, 7000, 8000, 9000],
+        "running_distance_full_all": [1000, 1300, 1600, 900, 1100, 1300],
+        "hsr_count_full_all": [4, 8, 12, 3, 5, 7],
+        "sprint_count_full_all": [1, 2, 3, 1, 2, 3],
+    })
+    metric_columns = [column for column in frame.columns if column not in {"position_group", "minutes"}]
+
+    scored = add_zscore_composite_scores(add_metric_derivatives(frame, metric_columns))
+
+    means = scored.groupby("position_group")["intensity_z_score"].mean().round(6).abs()
+    assert means.eq(0).all()
+    assert scored["intensity_z_score"].iloc[2] > scored["intensity_z_score"].iloc[0]

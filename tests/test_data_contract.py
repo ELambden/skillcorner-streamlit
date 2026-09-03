@@ -34,6 +34,10 @@ def test_processed_outputs_exist_and_have_contract() -> None:
         "off_ball_threat_score",
         "passing_progression_score",
         "archetype",
+        "profile_z_score",
+        "intensity_z_score",
+        "volume_z_score",
+        "explosiveness_z_score",
     } <= set(players)
 
 
@@ -53,7 +57,7 @@ def test_docs_front_door_references_static_payload_and_streamlit() -> None:
     assert "SkillCorner Football Intelligence Lab" in index
     assert "data/dashboard-data.json" in app
     assert "streamlit-frame" in index
-    assert "run-grid" in index
+    assert "Player Finder" not in index
 
 
 def test_static_payload_exports_friendly_labels_and_archetypes() -> None:

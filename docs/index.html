@@ -10,75 +10,36 @@
     <header class="site-nav">
       <a class="brand" href="index.html">SkillCorner Intelligence Lab</a>
       <nav>
-        <a href="#players">Players</a>
-        <a href="#teams">Teams</a>
-        <a href="#archetypes">Archetypes</a>
-        <a href="#matches">Matches</a>
-        <a href="#app">Streamlit</a>
+        <a href="#app">App</a>
+        <a href="#snapshot">Snapshot</a>
+        <a href="https://github.com/SkillCorner/opendata">Data</a>
       </nav>
     </header>
 
     <main>
-      <section class="hero">
-        <div>
-          <p class="eyebrow">AUS A-League 2024/2025 · SkillCorner Open Data</p>
-          <h1>Football intelligence from broadcast tracking data.</h1>
-          <p class="standfirst">A compact analyst dashboard combining physical output, off-ball runs, passing, dynamic events and phases of play into scoutable player profiles and match intelligence.</p>
+      <section id="app" class="app-section first-screen">
+        <div class="section-head app-head">
+          <div>
+            <p class="eyebrow">AUS A-League 2024/2025 · SkillCorner Open Data</p>
+            <h1>SkillCorner Football Intelligence Lab</h1>
+          </div>
+          <p class="source-line">Static data snapshot loading...</p>
+        </div>
+        <div class="embed-shell">
+          <iframe title="SkillCorner Streamlit app" id="streamlit-frame" src="about:blank"></iframe>
+        </div>
+      </section>
+
+      <section id="snapshot" class="band muted">
+        <div class="section-head">
+          <p class="eyebrow">Portfolio Snapshot</p>
+          <h2>Consolidated player profiles and full dynamic-event match intelligence.</h2>
         </div>
         <div class="scoreboard" aria-label="Data snapshot">
           <div><span>Players</span><strong id="players-count">-</strong></div>
           <div><span>Teams</span><strong id="teams-count">-</strong></div>
           <div><span>Matches</span><strong id="matches-count">-</strong></div>
-          <div><span>Events</span><strong id="events-count">-</strong></div>
-        </div>
-      </section>
-
-      <section id="players" class="band">
-        <div class="section-head">
-          <p class="eyebrow">Player Finder</p>
-          <h2>Consolidated player profiles instead of repeated context rows.</h2>
-        </div>
-        <div id="top-player-grid" class="player-grid"></div>
-      </section>
-
-      <section id="teams" class="band muted">
-        <div class="section-head">
-          <p class="eyebrow">Team Style</p>
-          <h2>Phase shares expose how sides create and defend.</h2>
-        </div>
-        <div id="team-style-grid" class="team-grid"></div>
-      </section>
-
-      <section id="archetypes" class="band">
-        <div class="section-head">
-          <p class="eyebrow">Archetype Lab</p>
-          <h2>Role labels with a clear statistical reason.</h2>
-          <p class="standfirst">Each archetype is now assigned once per consolidated player profile, using position-group comparisons across athletic load, sprint threat, attacking movement, passing progression and playing-time reliability.</p>
-        </div>
-        <div id="archetype-grid" class="archetype-grid"></div>
-      </section>
-
-      <section id="matches" class="band muted">
-        <div class="section-head">
-          <p class="eyebrow">Match Intelligence</p>
-          <h2>Dynamic events make the sample matches browsable.</h2>
-        </div>
-        <div id="match-grid" class="match-grid"></div>
-        <div class="section-head compact">
-          <p class="eyebrow">Off-Ball Runs</p>
-          <h3>Selected high-value runs from the full dynamic-event export.</h3>
-        </div>
-        <div id="run-grid" class="run-grid"></div>
-      </section>
-
-      <section id="app" class="app-section">
-        <div class="section-head">
-          <p class="eyebrow">Live App</p>
-          <h2>Open the full Streamlit lab.</h2>
-          <p class="source-line">Static data snapshot loading...</p>
-        </div>
-        <div class="embed-shell">
-          <iframe title="SkillCorner Streamlit app" id="streamlit-frame" src="about:blank"></iframe>
+          <div><span>Dynamic Actions</span><strong id="events-count">-</strong></div>
         </div>
       </section>
     </main>

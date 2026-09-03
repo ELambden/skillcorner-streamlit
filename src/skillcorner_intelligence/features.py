@@ -17,10 +17,16 @@ IDENTITY_COLUMNS = [
 ]
 
 METRIC_GLOSSARY = {
-    "athletic_load_score": "Composite percentile for metres per minute, high-speed running, sprint volume, accelerations and decelerations.",
-    "sprint_threat_score": "Composite percentile for high-intensity and sprint outputs, weighted toward repeat sprint actions.",
-    "off_ball_threat_score": "Composite percentile for off-ball run volume, dangerous runs, penalty-area runs and targeted/received runs.",
-    "passing_progression_score": "Composite percentile for line-breaking passes, pass-to-run completion, dangerous passes and xPass difficulty.",
+    "athletic_load_score": "0-100 percentile composite for metres per minute, high-speed running, sprint volume, accelerations and decelerations.",
+    "sprint_threat_score": "0-100 percentile composite for high-intensity and sprint outputs, weighted toward repeat sprint actions.",
+    "off_ball_threat_score": "0-100 percentile composite for off-ball run volume, dangerous runs, penalty-area runs and targeted/received runs.",
+    "passing_progression_score": "0-100 percentile composite for line-breaking passes, pass-to-run completion, dangerous passes and xPass difficulty.",
+    "intensity_z_score": "Role-adjusted z-score composite for high-intensity output, metres per minute, high-speed running and peak speed.",
+    "volume_z_score": "Role-adjusted z-score composite for total running, high-speed action volume and sprint action volume.",
+    "explosiveness_z_score": "Role-adjusted z-score composite for accelerations, decelerations, explosive actions and time to reach speed bands.",
+    "movement_z_score": "Role-adjusted z-score composite for off-ball run volume, dangerous movement, targeted movement and received movement.",
+    "progression_z_score": "Role-adjusted z-score composite for line-breaking passes, passes into runs, dangerous passes and pass difficulty.",
+    "profile_z_score": "Blended role-adjusted z-score profile where 0 is role average and positive values are above role average.",
     "in_possession_minutes": "Estimated time a player or team spent while their team had possession.",
     "out_of_possession_minutes": "Estimated time a player or team spent while their team defended.",
     "profile_score": "Blended analyst score combining athletic, off-ball and passing value with a playing-time reliability adjustment.",
@@ -60,6 +66,49 @@ COMPOSITE_INPUTS = {
         "pass_count_shotwithin10s_p30tip",
     ],
 }
+
+ZSCORE_COMPOSITE_INPUTS = {
+    "intensity_z_score": {
+        "metrics": [
+            "hi_count_full_all",
+            "total_metersperminute_full_all",
+            "hsr_distance_full_all",
+            "psv99",
+        ],
+        "invert": [],
+    },
+    "volume_z_score": {
+        "metrics": [
+            "total_distance_full_all",
+            "running_distance_full_all",
+            "hsr_count_full_all",
+            "sprint_count_full_all",
+        ],
+        "invert": [],
+    },
+    "explosiveness_z_score": {
+        "metrics": [
+            "medaccel_count_full_all",
+            "highaccel_count_full_all",
+            "meddecel_count_full_all",
+            "highdecel_count_full_all",
+            "explacceltohsr_count_full_all",
+            "explacceltosprint_count_full_all",
+            "timetohsr_top3",
+            "timetosprint_top3",
+        ],
+        "invert": ["timetohsr_top3", "timetosprint_top3"],
+    },
+    "movement_z_score": {
+        "metrics": COMPOSITE_INPUTS["off_ball_threat_score"],
+        "invert": [],
+    },
+    "progression_z_score": {
+        "metrics": COMPOSITE_INPUTS["passing_progression_score"],
+        "invert": [],
+    },
+}
+
 
 
 def as_float(value: Any, default: float = 0.0) -> float:
@@ -108,6 +157,50 @@ def add_metric_derivatives(frame: pd.DataFrame, source_columns: list[str]) -> pd
             numeric = pd.to_numeric(result[column], errors="coerce").fillna(0.0)
             result[f"{column}_pctile"] = percentile_by_position(result.assign(**{column: numeric}), column).round(2)
             result[f"{column}_z"] = zscore_by_position(result.assign(**{column: numeric}), column).round(3)
+    return result
+
+
+def _renormalize_by_position(frame: pd.DataFrame, values: pd.Series) -> pd.Series:
+    result = values.fillna(0.0)
+
+    def normalize(series: pd.Series) -> pd.Series:
+        std = series.std(ddof=0)
+        if not std:
+            return pd.Series(np.zeros(len(series)), index=series.index)
+        return (series - series.mean()) / std
+
+    return result.groupby(frame["position_group"]).transform(normalize).fillna(0.0)
+
+
+def add_zscore_composite_scores(frame: pd.DataFrame) -> pd.DataFrame:
+    result = frame.copy()
+    for score, config in ZSCORE_COMPOSITE_INPUTS.items():
+        z_columns = []
+        for column in config["metrics"]:
+            if column not in result:
+                continue
+            z_column = f"{column}_z"
+            if z_column not in result:
+                result[z_column] = zscore_by_position(result, column).round(3)
+            adjusted = result[z_column].astype(float) * (-1 if column in config["invert"] else 1)
+            adjusted_column = f"_{score}_{column}"
+            result[adjusted_column] = adjusted
+            z_columns.append(adjusted_column)
+        if z_columns:
+            raw_average = result[z_columns].mean(axis=1)
+            result[score] = _renormalize_by_position(result, raw_average).round(3)
+            result = result.drop(columns=z_columns)
+        else:
+            result[score] = 0.0
+
+    result["profile_z_score"] = _renormalize_by_position(
+        result,
+        0.22 * result["intensity_z_score"]
+        + 0.18 * result["volume_z_score"]
+        + 0.18 * result["explosiveness_z_score"]
+        + 0.24 * result["movement_z_score"]
+        + 0.18 * result["progression_z_score"],
+    ).round(3)
     return result
 
 

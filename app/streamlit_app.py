@@ -62,6 +62,21 @@ SCORE_COLUMNS = [
     "reliability_score",
 ]
 
+ZSCORE_COLUMNS = [
+    "profile_z_score",
+    "intensity_z_score",
+    "volume_z_score",
+    "explosiveness_z_score",
+    "movement_z_score",
+    "progression_z_score",
+]
+
+PHYSICAL_FILTER_COLUMNS = [
+    "intensity_z_score",
+    "volume_z_score",
+    "explosiveness_z_score",
+]
+
 PLAYER_TABLE_COLUMNS = [
     "player_name",
     "team_name",
@@ -77,6 +92,12 @@ PLAYER_TABLE_COLUMNS = [
     "sprint_threat_score",
     "off_ball_threat_score",
     "passing_progression_score",
+    "profile_z_score",
+    "intensity_z_score",
+    "volume_z_score",
+    "explosiveness_z_score",
+    "movement_z_score",
+    "progression_z_score",
     "psv99",
     "total_metersperminute_full_all",
     "pass_pct_completed",
@@ -117,6 +138,12 @@ COLUMN_CONFIG = {
     "total_metersperminute_full_all": st.column_config.NumberColumn("Metres per minute", format="%.1f"),
     "pass_pct_completed": st.column_config.NumberColumn("Pass completion", format="%.1f%%"),
     "similarity_gap": st.column_config.NumberColumn("Profile difference", format="%.1f"),
+    "profile_z_score": st.column_config.NumberColumn("Profile z", format="%.2f"),
+    "intensity_z_score": st.column_config.NumberColumn("Intensity z", format="%.2f"),
+    "volume_z_score": st.column_config.NumberColumn("Volume z", format="%.2f"),
+    "explosiveness_z_score": st.column_config.NumberColumn("Explosive z", format="%.2f"),
+    "movement_z_score": st.column_config.NumberColumn("Movement z", format="%.2f"),
+    "progression_z_score": st.column_config.NumberColumn("Progression z", format="%.2f"),
     "events": st.column_config.NumberColumn("Actions", format="%d"),
     "player_possessions": st.column_config.NumberColumn("Possessions", format="%d"),
     "off_ball_runs": st.column_config.NumberColumn("Off-ball runs", format="%d"),
@@ -229,6 +256,38 @@ def options_from_labels(frame: pd.DataFrame, label_column: str, value_column: st
     return dict(zip(pairs[label_column].astype(str), pairs[value_column].astype(str), strict=False))
 
 
+def zscore_long_frame(frame: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    available = [column for column in columns if column in frame]
+    if not available:
+        return pd.DataFrame(columns=["Score", "Z-score"])
+    long = frame[available].mean().reset_index()
+    long.columns = ["Score", "Z-score"]
+    long["Score"] = long["Score"].map(lambda value: SCORE_LABELS.get(value, value))
+    return long
+
+
+def team_totals_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    numeric_columns = [
+        "events",
+        "player_possessions",
+        "off_ball_runs",
+        "passing_options",
+        "on_ball_engagements",
+        "dangerous_events",
+        "received_runs",
+        "targeted_runs",
+        "high_intensity_runs",
+        "xthreat_total",
+    ]
+    available = [column for column in numeric_columns if column in frame]
+    if frame.empty or not available:
+        return pd.DataFrame()
+    totals = frame.groupby(["team_id", "team_name"], as_index=False)[available].sum()
+    totals["runs_per_possession"] = (totals["off_ball_runs"] / totals["player_possessions"].replace(0, pd.NA)).fillna(0).round(3)
+    totals["threat_per_action"] = (totals["xthreat_total"] / totals["events"].replace(0, pd.NA)).fillna(0).round(4)
+    return totals
+
+
 players, teams, matches, events, offball_runs, match_teams, phases, summary = prepare_display_data()
 
 st.title("SkillCorner Football Intelligence Lab")
@@ -243,24 +302,35 @@ with st.sidebar:
     max_minutes = int(max(players["minutes"].max(), 1))
     min_minutes = st.slider("Minimum evidence minutes", 0, max_minutes, min(300, max_minutes), 60)
     min_profile = st.slider("Minimum overall profile", 0, 100, 0, 5)
+    st.subheader("Physical z-score filters")
+    min_intensity_z = st.slider("Minimum intensity z", -3.0, 3.0, -3.0, 0.25)
+    min_volume_z = st.slider("Minimum volume z", -3.0, 3.0, -3.0, 0.25)
+    min_explosive_z = st.slider("Minimum explosiveness z", -3.0, 3.0, -3.0, 0.25)
 
 filtered = players.copy()
 if position != "All":
     filtered = filtered.loc[filtered["position_group"] == position]
 if team != "All":
     filtered = filtered.loc[filtered["team_name"] == team]
-filtered = filtered.loc[(filtered["minutes"] >= min_minutes) & (filtered["profile_score"] >= min_profile)]
+filtered = filtered.loc[
+    (filtered["minutes"] >= min_minutes)
+    & (filtered["profile_score"] >= min_profile)
+    & (filtered["intensity_z_score"] >= min_intensity_z)
+    & (filtered["volume_z_score"] >= min_volume_z)
+    & (filtered["explosiveness_z_score"] >= min_explosive_z)
+]
 
-tab_league, tab_players, tab_archetypes, tab_matches, tab_tracking, tab_notes = st.tabs([
-    "League Lens",
-    "Player Finder",
-    "Archetype Lab",
-    "Match Intelligence",
-    "Tracking Room",
+tab_overview, tab_players, tab_teams, tab_archetypes, tab_matches, tab_tracking, tab_notes = st.tabs([
+    "Overview",
+    "Players",
+    "Teams",
+    "Archetypes",
+    "Matches",
+    "Tracking",
     "Method Notes",
 ])
 
-with tab_league:
+with tab_overview:
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Players", f"{players['player_id'].nunique():,}")
     c2.metric("Clubs", f"{players['team_id'].nunique():,}")
@@ -283,20 +353,32 @@ with tab_league:
         fig.update_layout(height=620, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Overall profile")
         st.plotly_chart(fig, width="stretch")
     with right:
-        phase_total = teams.groupby(["team_name", "phase_type", "phase_label"], as_index=False)["phase_minutes"].sum()
-        phase_options = sorted(phase_total["phase_label"].dropna().unique())
-        selected_phase_label = st.selectbox("Attacking phase", phase_options)
-        phase_view = phase_total.loc[phase_total["phase_label"] == selected_phase_label].sort_values("phase_minutes", ascending=False)
-        fig = px.bar(
-            phase_view,
-            x="phase_minutes",
-            y="team_name",
-            orientation="h",
-            title=f"{selected_phase_label} minutes by club",
-            labels={"phase_minutes": "Minutes", "team_name": "Club"},
-        )
-        fig.update_layout(height=620, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Minutes")
-        st.plotly_chart(fig, width="stretch")
+        if filtered.empty:
+            st.info("No players match the current filters.")
+        else:
+            z_view = filtered.copy()
+            z_view["explosive_size"] = (pd.to_numeric(z_view["explosiveness_z_score"], errors="coerce").fillna(0) + 3.2).clip(lower=0.2)
+            fig = px.scatter(
+                z_view,
+                x="volume_z_score",
+                y="intensity_z_score",
+                size="explosive_size",
+                color="archetype",
+                hover_name="player_name",
+                hover_data={
+                    "team_name": True,
+                    "position_group": True,
+                    "profile_z_score": ":.2f",
+                    "explosiveness_z_score": ":.2f",
+                    "explosive_size": False,
+                },
+                title="Volume vs intensity, sized by explosiveness",
+                labels={"volume_z_score": "Volume z-score", "intensity_z_score": "Intensity z-score", "archetype": "Archetype"},
+            )
+            fig.add_hline(y=0, line_dash="dot", line_color="#201e1d")
+            fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
+            fig.update_layout(height=620, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2")
+            st.plotly_chart(fig, width="stretch")
 
 with tab_players:
     search = st.text_input("Search player, club, role or archetype", "")
@@ -311,11 +393,101 @@ with tab_players:
         table = table.loc[mask]
 
     st.dataframe(
-        table[[column for column in PLAYER_TABLE_COLUMNS if column in table]].sort_values("profile_score", ascending=False),
+        table[[column for column in PLAYER_TABLE_COLUMNS if column in table]].sort_values("profile_z_score", ascending=False),
         width="stretch",
         hide_index=True,
         column_config=COLUMN_CONFIG,
     )
+
+    if not table.empty:
+        st.subheader("Player Z-Score Profile")
+        player_labels = table["profile_key"].tolist()
+        selected_label = st.selectbox("Inspect player profile", player_labels, key="player_tab_inspect")
+        selected_id = pd.to_numeric(selected_label.split(" | ")[0], errors="coerce")
+        selected = table.loc[table["player_id"] == selected_id].head(1)
+        if not selected.empty:
+            row = selected.iloc[0]
+            left, right = st.columns([0.8, 1.2])
+            with left:
+                st.caption(f"{row['team_name']} - {row['position_group']} - {row['archetype']} - {float(row['minutes']):.0f} evidence minutes")
+                st.plotly_chart(radar_figure(row), width="stretch")
+            with right:
+                z_rows = pd.DataFrame([
+                    {"Metric group": SCORE_LABELS[column], "Z-score": float(row[column])}
+                    for column in ZSCORE_COLUMNS
+                    if column in row
+                ]).sort_values("Z-score")
+                fig = px.bar(
+                    z_rows,
+                    x="Z-score",
+                    y="Metric group",
+                    orientation="h",
+                    color="Z-score",
+                    color_continuous_scale=["#d6006c", "#f3f2f2", "#0088b0"],
+                    title="Role-adjusted z-score profile",
+                )
+                fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
+                fig.update_layout(height=420, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Z-score vs primary role average")
+                st.plotly_chart(fig, width="stretch")
+
+        z_pool = table.copy()
+        z_pool["explosive_size"] = (pd.to_numeric(z_pool["explosiveness_z_score"], errors="coerce").fillna(0) + 3.2).clip(lower=0.2)
+        fig = px.scatter(
+            z_pool,
+            x="volume_z_score",
+            y="intensity_z_score",
+            size="explosive_size",
+            color="position_group",
+            hover_name="player_name",
+            hover_data={"team_name": True, "profile_z_score": ":.2f", "explosiveness_z_score": ":.2f", "explosive_size": False},
+            title="Physical profile map",
+            labels={"volume_z_score": "Volume z-score", "intensity_z_score": "Intensity z-score", "position_group": "Primary role"},
+        )
+        fig.add_hline(y=0, line_dash="dot", line_color="#201e1d")
+        fig.add_vline(x=0, line_dash="dot", line_color="#201e1d")
+        fig.update_layout(height=560, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2")
+        st.plotly_chart(fig, width="stretch")
+
+with tab_teams:
+    team_totals = team_totals_frame(match_teams)
+    if team_totals.empty:
+        st.info("No team match data found. Run the refresh pipeline.")
+    else:
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            fig = px.bar(
+                team_totals.sort_values("xthreat_total", ascending=True),
+                x="xthreat_total",
+                y="team_name",
+                orientation="h",
+                title="Total threat value by team",
+                labels={"xthreat_total": "Threat value", "team_name": "Team"},
+            )
+            fig.update_layout(height=520, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Threat value")
+            st.plotly_chart(fig, width="stretch")
+        with c2:
+            fig = px.scatter(
+                team_totals,
+                x="high_intensity_runs",
+                y="xthreat_total",
+                size="off_ball_runs",
+                color="dangerous_events",
+                hover_name="team_name",
+                hover_data={"events": True, "received_runs": True, "runs_per_possession": ":.3f", "threat_per_action": ":.4f"},
+                title="Run intensity vs attacking threat",
+                labels={"high_intensity_runs": "High-intensity runs", "xthreat_total": "Threat value", "dangerous_events": "Dangerous actions"},
+            )
+            fig.update_layout(height=520, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2")
+            st.plotly_chart(fig, width="stretch")
+        st.dataframe(
+            team_totals.sort_values("xthreat_total", ascending=False),
+            width="stretch",
+            hide_index=True,
+            column_config=COLUMN_CONFIG | {
+                "runs_per_possession": st.column_config.NumberColumn("Runs per possession", format="%.3f"),
+                "threat_per_action": st.column_config.NumberColumn("Threat per action", format="%.4f"),
+            },
+        )
 
 with tab_archetypes:
     guide_left, guide_right = st.columns([1, 1])

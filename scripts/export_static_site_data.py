@@ -63,9 +63,15 @@ if __name__ == "__main__":
         "profile_context_count",
         "archetype",
         "profile_score",
+        "profile_z_score",
         "athletic_load_score",
         "off_ball_threat_score",
         "passing_progression_score",
+        "intensity_z_score",
+        "volume_z_score",
+        "explosiveness_z_score",
+        "movement_z_score",
+        "progression_z_score",
     ]
     top_players = [
         {field: row.get(field, "") for field in top_player_fields}

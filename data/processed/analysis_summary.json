@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T21:50:07.574078+00:00",
+  "generatedAt": "2026-09-03T22:17:31.758400+00:00",
   "source": "SkillCorner Open Data, AUS A-League 2024/2025",
   "rows": {
     "players": 268,
@@ -11,10 +11,16 @@
     "phaseRows": 4581
   },
   "metricGlossary": {
-    "athletic_load_score": "Composite percentile for metres per minute, high-speed running, sprint volume, accelerations and decelerations.",
-    "sprint_threat_score": "Composite percentile for high-intensity and sprint outputs, weighted toward repeat sprint actions.",
-    "off_ball_threat_score": "Composite percentile for off-ball run volume, dangerous runs, penalty-area runs and targeted/received runs.",
-    "passing_progression_score": "Composite percentile for line-breaking passes, pass-to-run completion, dangerous passes and xPass difficulty.",
+    "athletic_load_score": "0-100 percentile composite for metres per minute, high-speed running, sprint volume, accelerations and decelerations.",
+    "sprint_threat_score": "0-100 percentile composite for high-intensity and sprint outputs, weighted toward repeat sprint actions.",
+    "off_ball_threat_score": "0-100 percentile composite for off-ball run volume, dangerous runs, penalty-area runs and targeted/received runs.",
+    "passing_progression_score": "0-100 percentile composite for line-breaking passes, pass-to-run completion, dangerous passes and xPass difficulty.",
+    "intensity_z_score": "Role-adjusted z-score composite for high-intensity output, metres per minute, high-speed running and peak speed.",
+    "volume_z_score": "Role-adjusted z-score composite for total running, high-speed action volume and sprint action volume.",
+    "explosiveness_z_score": "Role-adjusted z-score composite for accelerations, decelerations, explosive actions and time to reach speed bands.",
+    "movement_z_score": "Role-adjusted z-score composite for off-ball run volume, dangerous movement, targeted movement and received movement.",
+    "progression_z_score": "Role-adjusted z-score composite for line-breaking passes, passes into runs, dangerous passes and pass difficulty.",
+    "profile_z_score": "Blended role-adjusted z-score profile where 0 is role average and positive values are above role average.",
     "in_possession_minutes": "Estimated time a player or team spent while their team had possession.",
     "out_of_possession_minutes": "Estimated time a player or team spent while their team defended.",
     "profile_score": "Blended analyst score combining athletic, off-ball and passing value with a playing-time reliability adjustment."
@@ -116,100 +122,160 @@
       "team_name": "Melbourne City FC",
       "position_group": "Central Defender",
       "profile_score": 86.48,
+      "profile_z_score": 2.378,
       "archetype": "Depth runner",
       "athletic_load_score": 97.53,
       "off_ball_threat_score": 88.89,
-      "passing_progression_score": 70.68
+      "passing_progression_score": 70.68,
+      "intensity_z_score": 1.969,
+      "volume_z_score": 2.289,
+      "explosiveness_z_score": 0.667,
+      "movement_z_score": 2.15,
+      "progression_z_score": 1.118
     },
     {
       "player_name": "Anthony C\u00e1ceres",
       "team_name": "Sydney Football Club",
       "position_group": "Midfield",
       "profile_score": 83.75,
+      "profile_z_score": 2.401,
       "archetype": "Depth runner",
       "athletic_load_score": 90.0,
       "off_ball_threat_score": 73.61,
-      "passing_progression_score": 79.72
+      "passing_progression_score": 79.72,
+      "intensity_z_score": 1.879,
+      "volume_z_score": 2.344,
+      "explosiveness_z_score": 1.91,
+      "movement_z_score": 0.547,
+      "progression_z_score": 1.822
     },
     {
       "player_name": "Liam  Gillion",
       "team_name": "Auckland FC",
       "position_group": "Wide Attacker",
       "profile_score": 83.57,
+      "profile_z_score": 2.04,
       "archetype": "Depth runner",
       "athletic_load_score": 85.42,
       "off_ball_threat_score": 88.69,
-      "passing_progression_score": 67.86
+      "passing_progression_score": 67.86,
+      "intensity_z_score": 1.718,
+      "volume_z_score": 1.743,
+      "explosiveness_z_score": 0.718,
+      "movement_z_score": 1.334,
+      "progression_z_score": 0.64
     },
     {
       "player_name": "Matthew Sheridan",
       "team_name": "Wellington Phoenix FC",
       "position_group": "Central Defender",
       "profile_score": 83.42,
+      "profile_z_score": 3.041,
       "archetype": "Depth runner",
       "athletic_load_score": 96.92,
       "off_ball_threat_score": 98.76,
-      "passing_progression_score": 47.22
+      "passing_progression_score": 47.22,
+      "intensity_z_score": 2.5,
+      "volume_z_score": 1.782,
+      "explosiveness_z_score": 1.214,
+      "movement_z_score": 4.22,
+      "progression_z_score": 0.278
     },
     {
       "player_name": "Brandon Borrello",
       "team_name": "Western Sydney Wanderers FC",
       "position_group": "Center Forward",
       "profile_score": 81.74,
+      "profile_z_score": 1.807,
       "archetype": "Depth runner",
       "athletic_load_score": 75.72,
       "off_ball_threat_score": 80.07,
-      "passing_progression_score": 84.06
+      "passing_progression_score": 84.06,
+      "intensity_z_score": 1.222,
+      "volume_z_score": 1.525,
+      "explosiveness_z_score": 1.185,
+      "movement_z_score": 1.075,
+      "progression_z_score": 1.256
     },
     {
       "player_name": "Guillermo Luis May Bartesaghi",
       "team_name": "Auckland FC",
       "position_group": "Center Forward",
       "profile_score": 80.42,
+      "profile_z_score": 1.858,
       "archetype": "Depth runner",
       "athletic_load_score": 82.25,
       "off_ball_threat_score": 87.68,
-      "passing_progression_score": 85.51
+      "passing_progression_score": 85.51,
+      "intensity_z_score": 0.46,
+      "volume_z_score": 1.509,
+      "explosiveness_z_score": 1.769,
+      "movement_z_score": 1.489,
+      "progression_z_score": 1.259
     },
     {
       "player_name": "Daniel Wilmering",
       "team_name": "Newcastle United Jets FC",
       "position_group": "Full Back",
       "profile_score": 80.32,
+      "profile_z_score": 2.094,
       "archetype": "Balanced contributor",
       "athletic_load_score": 89.1,
       "off_ball_threat_score": 69.55,
-      "passing_progression_score": 67.95
+      "passing_progression_score": 67.95,
+      "intensity_z_score": 1.68,
+      "volume_z_score": 2.038,
+      "explosiveness_z_score": 2.031,
+      "movement_z_score": 0.537,
+      "progression_z_score": 1.075
     },
     {
       "player_name": "Alexandar Popovic",
       "team_name": "Sydney Football Club",
       "position_group": "Central Defender",
       "profile_score": 78.22,
+      "profile_z_score": 1.456,
       "archetype": "Depth runner",
       "athletic_load_score": 84.57,
       "off_ball_threat_score": 78.55,
-      "passing_progression_score": 64.2
+      "passing_progression_score": 64.2,
+      "intensity_z_score": 1.327,
+      "volume_z_score": 1.39,
+      "explosiveness_z_score": 1.012,
+      "movement_z_score": 0.785,
+      "progression_z_score": 0.655
     },
     {
       "player_name": "Ben Garuccio",
       "team_name": "Western United",
       "position_group": "Full Back",
       "profile_score": 77.74,
+      "profile_z_score": 1.736,
       "archetype": "Balanced contributor",
       "athletic_load_score": 94.55,
       "off_ball_threat_score": 66.98,
-      "passing_progression_score": 66.99
+      "passing_progression_score": 66.99,
+      "intensity_z_score": 1.572,
+      "volume_z_score": 1.884,
+      "explosiveness_z_score": 1.016,
+      "movement_z_score": 0.494,
+      "progression_z_score": 1.079
     },
     {
       "player_name": "Luis Felipe Gallegos Leiva",
       "team_name": "Auckland FC",
       "position_group": "Midfield",
       "profile_score": 77.21,
+      "profile_z_score": 1.397,
       "archetype": "Depth runner",
       "athletic_load_score": 79.45,
       "off_ball_threat_score": 77.5,
-      "passing_progression_score": 63.33
+      "passing_progression_score": 63.33,
+      "intensity_z_score": 2.107,
+      "volume_z_score": 1.905,
+      "explosiveness_z_score": -0.415,
+      "movement_z_score": 0.643,
+      "progression_z_score": 0.373
     }
   ],
   "tracking": [

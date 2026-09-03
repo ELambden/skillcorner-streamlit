@@ -64,6 +64,12 @@ SCORE_LABELS = {
     "off_ball_threat_score": "Off-ball threat",
     "passing_progression_score": "Passing progression",
     "reliability_score": "Reliability",
+    "intensity_z_score": "Intensity z-score",
+    "volume_z_score": "Volume z-score",
+    "explosiveness_z_score": "Explosiveness z-score",
+    "movement_z_score": "Movement z-score",
+    "progression_z_score": "Progression z-score",
+    "profile_z_score": "Profile z-score",
 }
 
 METRIC_LABELS = {
