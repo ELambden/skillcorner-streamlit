@@ -59,3 +59,13 @@ The upstream tracking JSONL files are stored with Git LFS. A normal raw GitHub d
 ## Data Credit
 
 Data comes from SkillCorner Open Data, released in partnership with PySport. This project is an educational/portfolio sample and should credit SkillCorner when reused.
+
+## GitHub Pages Deployment
+
+The workflow in `.github/workflows/pages.yml` publishes the prebuilt `docs/` folder with GitHub Pages Actions. If the first run fails with `Get Pages site failed` or `Not Found`, enable Pages once in the repository UI:
+
+1. Open `Settings` > `Pages` for `ELambden/skillcorner-streamlit`.
+2. Under `Build and deployment`, set `Source` to `GitHub Actions`.
+3. Rerun the `Deploy GitHub Pages` workflow.
+
+For fully automated first-time enablement, create a repository secret named `PAGES_TOKEN` using a fine-grained token with Pages write access, then rerun the workflow. Without that secret, GitHub's default `GITHUB_TOKEN` can deploy once Pages is enabled, but it may not be allowed to create the Pages site on the first run.
