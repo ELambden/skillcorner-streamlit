@@ -69,3 +69,16 @@ The workflow in `.github/workflows/pages.yml` publishes the prebuilt `docs/` fol
 3. Rerun the `Deploy GitHub Pages` workflow.
 
 For fully automated first-time enablement, create a repository secret named `PAGES_TOKEN` using a fine-grained token with Pages write access, then rerun the workflow. Without that secret, GitHub's default `GITHUB_TOKEN` can deploy once Pages is enabled, but it may not be allowed to create the Pages site on the first run.
+
+## Archetype Interpretation
+
+The app assigns archetypes after comparing players within their role group, so a full-back is not judged against a centre forward. The six labels are intended as tactical reads, not scouting grades by themselves:
+
+- `Depth runner`: vertical runner with strong attacking movement and sprint-threat scores.
+- `Connector creator`: link player with high passing progression and enough movement value to connect attacks.
+- `High-output carrier`: high-load physical profile driven by metres, high-intensity actions, accelerations and repeat running.
+- `Progression hub`: ball-use profile driven mainly by line-breaking passes, passes into runs and dangerous completed passes.
+- `Box-movement threat`: attacking mover whose strongest signals are dangerous, targeted, received or penalty-area movements.
+- `Balanced contributor`: rounded or lower-signal profile that does not cross a specialist threshold.
+
+The detailed thresholds, prioritised evidence, and tactical interpretation for each archetype are shown in the Streamlit Archetype Lab and exported into `docs/data/dashboard-data.json` for the static site.

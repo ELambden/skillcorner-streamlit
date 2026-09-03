@@ -4,6 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
+from .presentation import event_label
+
 PITCH_LENGTH = 104
 PITCH_WIDTH = 68
 
@@ -18,9 +20,19 @@ def pitch_figure(events: pd.DataFrame, title: str = "Dynamic Event Map") -> go.F
     fig.add_shape(type="line", x0=0, x1=0, y0=-PITCH_WIDTH / 2, y1=PITCH_WIDTH / 2, line={"color": "#f3f2f2", "width": 1})
     fig.add_shape(type="circle", x0=-9.15, x1=9.15, y0=-9.15, y1=9.15, line={"color": "#f3f2f2", "width": 1})
     if not frame.empty:
-        color = frame["event_type"] if "event_type" in frame else None
-        hover = [column for column in ["player_name", "team_shortname", "event_subtype", "time_start", "xthreat"] if column in frame]
-        scatter = px.scatter(frame, x="x_start", y="y_start", color=color, hover_data=hover, opacity=0.72)
+        if "event_label" not in frame and "event_type" in frame:
+            frame["event_label"] = frame["event_type"].map(event_label)
+        color = frame["event_label"] if "event_label" in frame else None
+        hover = [column for column in ["player_name", "team_shortname", "event_label", "event_subtype", "time_start", "xthreat"] if column in frame]
+        scatter = px.scatter(
+            frame,
+            x="x_start",
+            y="y_start",
+            color=color,
+            labels={"event_label": "Action type", "x_start": "Pitch length", "y_start": "Pitch width"},
+            hover_data=hover,
+            opacity=0.72,
+        )
         for trace in scatter.data:
             fig.add_trace(trace)
     fig.update_layout(

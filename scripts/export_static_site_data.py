@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from skillcorner_intelligence.paths import ANALYSIS_JSON, MATCH_SUMMARY_CSV, PLAYER_PROFILES_CSV, STATIC_JSON, TEAM_SUMMARY_CSV
+from skillcorner_intelligence.presentation import ARCHETYPE_DEFINITIONS, EVENT_TYPE_LABELS, IN_POSSESSION_PHASE_LABELS, TRACKING_STATUS_LABELS
 
 STREAMLIT_APP_URL = "https://skillcorner-app-m6j5idxghzigicecvxbchr.streamlit.app/?embed=true"
 
@@ -47,6 +48,12 @@ if __name__ == "__main__":
         "streamlitAppUrl": STREAMLIT_APP_URL,
         "scope": analysis.get("rows", {}),
         "metricGlossary": analysis.get("metricGlossary", {}),
+        "archetypeDefinitions": ARCHETYPE_DEFINITIONS,
+        "displayLabels": {
+            "events": EVENT_TYPE_LABELS,
+            "phases": IN_POSSESSION_PHASE_LABELS,
+            "tracking": TRACKING_STATUS_LABELS,
+        },
         "topPlayers": top_players,
         "teamStyle": teams,
         "matches": matches,

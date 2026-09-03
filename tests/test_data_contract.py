@@ -38,3 +38,12 @@ def test_docs_front_door_references_static_payload_and_streamlit() -> None:
     assert "SkillCorner Football Intelligence Lab" in index
     assert "data/dashboard-data.json" in app
     assert "streamlit-frame" in index
+
+
+def test_static_payload_exports_friendly_labels_and_archetypes() -> None:
+    payload = json.loads(STATIC_JSON.read_text(encoding="utf-8"))
+    assert payload["displayLabels"]["events"]["player_possession"] == "In-possession action"
+    assert payload["displayLabels"]["events"]["off_ball_run"] == "Off-ball movement"
+    assert payload["displayLabels"]["phases"]["build_up"] == "Build-up"
+    assert "Depth runner" in payload["archetypeDefinitions"]
+    assert "prioritised" in payload["archetypeDefinitions"]["Connector creator"]

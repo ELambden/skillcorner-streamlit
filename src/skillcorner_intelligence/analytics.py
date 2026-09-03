@@ -19,6 +19,7 @@ from .data import (
     tracking_status,
 )
 from .features import COMPOSITE_INPUTS, METRIC_GLOSSARY, add_composite_scores, add_metric_derivatives, assign_archetypes, to_numeric
+from .presentation import ARCHETYPE_DEFINITIONS, EVENT_TYPE_LABELS, IN_POSSESSION_PHASE_LABELS, TRACKING_STATUS_LABELS
 from .paths import ANALYSIS_JSON, EVENT_SAMPLE_CSV, MATCH_SUMMARY_CSV, PHASE_TIMELINE_CSV, PLAYER_PROFILES_CSV, PROCESSED_DIR, TEAM_SUMMARY_CSV
 
 
@@ -163,6 +164,12 @@ def write_outputs() -> dict[str, Any]:
             "phaseRows": int(len(phase_timeline)),
         },
         "metricGlossary": METRIC_GLOSSARY,
+        "archetypeDefinitions": ARCHETYPE_DEFINITIONS,
+        "displayLabels": {
+            "events": EVENT_TYPE_LABELS,
+            "phases": IN_POSSESSION_PHASE_LABELS,
+            "tracking": TRACKING_STATUS_LABELS,
+        },
         "topPlayers": profiles.head(10)[[
             "player_name", "team_name", "position_group", "profile_score", "archetype",
             "athletic_load_score", "off_ball_threat_score", "passing_progression_score",
