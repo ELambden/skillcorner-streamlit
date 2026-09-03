@@ -106,3 +106,24 @@ def tracking_status(match_id: str | int) -> dict[str, Any]:
         "status": "available" if size > 1024 and not is_pointer else "lfs-pointer",
         "bytes": size,
     }
+
+
+def load_tracking_frame(match_id: str | int) -> pd.DataFrame:
+    """Load optional full tracking JSONL data when real Git LFS objects exist locally."""
+    status = tracking_status(match_id)
+    if not status["available"]:
+        return pd.DataFrame()
+
+    path = MATCHES_DIR / str(match_id) / f"{match_id}_tracking_extrapolated.jsonl"
+    frame = pd.read_json(path, lines=True)
+    if frame.empty:
+        return frame
+
+    if "possession" in frame:
+        possession = pd.json_normalize(frame["possession"]).add_prefix("possession_")
+        frame = pd.concat([frame.drop(columns=["possession"]), possession], axis=1)
+    if "ball_data" in frame:
+        ball = pd.json_normalize(frame["ball_data"]).add_prefix("ball_")
+        frame = pd.concat([frame.drop(columns=["ball_data"]), ball], axis=1)
+    frame["match_id"] = int(match_id)
+    return frame

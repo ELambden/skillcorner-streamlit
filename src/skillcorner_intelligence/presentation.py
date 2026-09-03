@@ -4,6 +4,7 @@ EVENT_TYPE_LABELS = {
     "player_possession": "In-possession action",
     "off_ball_run": "Off-ball movement",
     "passing_option": "Available passing lane",
+    "on_ball_engagement": "Defensive pressure",
 }
 
 IN_POSSESSION_PHASE_LABELS = {
@@ -26,6 +27,28 @@ OUT_OF_POSSESSION_PHASE_LABELS = {
     "high_block": "High block",
     "medium_block": "Mid block",
     "low_block": "Low block",
+}
+
+RUN_SUBTYPE_LABELS = {
+    "behind": "Run in behind",
+    "coming_short": "Coming short",
+    "cross_receiver": "Cross receiver",
+    "dropping_off": "Dropping off",
+    "overlap": "Overlap",
+    "pulling_half_space": "Pulling half-space",
+    "pulling_wide": "Pulling wide",
+    "run_ahead_of_the_ball": "Ahead of the ball",
+    "support": "Support run",
+    "underlap": "Underlap",
+}
+
+SPEED_BAND_LABELS = {
+    "walking": "Walking",
+    "jogging": "Jogging",
+    "running": "Running",
+    "hsr": "High-speed run",
+    "sprinting": "Sprint",
+    "sprint": "Sprint",
 }
 
 TRACKING_STATUS_LABELS = {
@@ -159,6 +182,14 @@ def defensive_phase_label(value: object) -> str:
 
 def tracking_label(value: object) -> str:
     return label_value(value, TRACKING_STATUS_LABELS)
+
+
+def run_subtype_label(value: object) -> str:
+    return label_value(value, RUN_SUBTYPE_LABELS)
+
+
+def speed_band_label(value: object) -> str:
+    return label_value(value, SPEED_BAND_LABELS)
 
 
 def metric_label(value: object) -> str:

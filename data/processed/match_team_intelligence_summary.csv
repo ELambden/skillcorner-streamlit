@@ -1,0 +1,21 @@
+match_id,match_label,team_id,team_name,events,player_possessions,off_ball_runs,passing_options,on_ball_engagements,dangerous_events,received_runs,targeted_runs,high_intensity_runs,xthreat_total,longest_run_meters,longest_run_player,top_xthreat_player
+2017461,Melbourne V FC v Auckland FC,868,Melbourne V FC,2304,495,234,1255,320,214,70,91,65,17.633,46.3,J. Inserra,B. Fornaroli
+2017461,Melbourne V FC v Auckland FC,4177,Auckland FC,1884,344,226,813,501,207,57,81,72,17.425,57.92,L. Rogerson,L. Rogerson
+2015213,Western United v Auckland FC,1803,Western United,2109,413,224,1017,455,192,62,80,71,17.755,55.82,M. Ruhs,O. Lavale
+2015213,Western United v Auckland FC,4177,Auckland FC,2473,512,306,1277,378,158,84,108,75,16.421,52.25,C. Elliott,L. Rogerson
+2013725,Western United v Sydney FC,869,Sydney FC,2533,507,225,1348,453,247,67,92,54,19.945,46.8,Douglas Costa,J. Courtney-Perkins
+2013725,Western United v Sydney FC,1803,Western United,2466,492,287,1186,501,254,81,105,77,23.596,57.34,O. Lavale,O. Lavale
+2011166,Wellington P FC v Melbourne V FC,867,Wellington P FC,1870,363,200,899,408,172,47,67,67,14.504,67.31,M. Sheridan,H. Ishige
+2011166,Wellington P FC v Melbourne V FC,868,Melbourne V FC,2096,421,237,1076,362,278,62,78,63,21.931,72.85,N. Velupillay,N. Vergos
+2006229,Melbourne City v Macarthur FC,1804,Macarthur FC,2148,407,185,1035,521,113,52,75,24,9.445,46.45,P. Makrillos,C. Ikonomidis
+2006229,Melbourne City v Macarthur FC,2380,Melbourne City,2843,587,325,1552,379,281,91,112,54,23.523,48.59,N. Atkinson,M. Leckie
+1996435,Sydney FC v Adelaide United,866,Adelaide United,2537,485,249,1230,573,235,66,90,72,21.684,64.02,D. Pierias,A. Goodwin
+1996435,Sydney FC v Adelaide United,869,Sydney FC,2755,553,285,1435,482,266,84,107,66,22.458,49.6,A. Segecic,J. Kucharski
+1953632,CC Mariners v Melbourne City,870,CC Mariners,1822,340,155,867,460,68,50,59,30,6.551,45.58,Mikael Doka,N. Paull
+1953632,CC Mariners v Melbourne City,2380,Melbourne City,3001,657,302,1720,322,184,77,97,51,16.459,42.5,B. Mazzeo,H. Politidis
+1925299,Brisbane FC v Perth Glory,871,Perth Glory,2216,399,230,1025,562,183,52,72,40,15.373,53.82,T. Ostler,K. Ngo
+1925299,Brisbane FC v Perth Glory,1802,Brisbane FC,3004,663,265,1708,368,296,77,91,44,21.746,45.21,H. Van Der Saag,T. Waddingham
+1899585,Auckland FC v Wellington P FC,867,Wellington P FC,2364,452,248,1175,489,205,62,88,74,16.192,49.35,K. Nagasawa,K. Barbarouses
+1899585,Auckland FC v Wellington P FC,4177,Auckland FC,2349,477,220,1212,440,260,62,75,45,18.965,66.5,F. Gallegos,L. Gillion
+1886347,Auckland FC v Newcastle,1805,Newcastle,2371,469,259,1158,485,126,63,76,56,11.771,50.82,T. Aquilina,T. Aquilina
+1886347,Auckland FC v Newcastle,4177,Auckland FC,2708,530,340,1386,452,263,85,112,76,22.45,61.28,L. Gillion,L. Gillion

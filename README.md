@@ -6,11 +6,12 @@ The app turns the A-League 2024/2025 sample into scoutable player profiles, team
 
 ## What It Shows
 
-- Physical, off-ball run, and passing aggregates joined into one player profile table
-- Position-group percentiles, z-scores, archetypes, and composite analyst scores
+- Physical, off-ball run, and passing aggregates consolidated into one row per player
+- Position-group percentiles, z-scores, archetypes, and composite analyst scores built after player consolidation
 - Team phase-of-play summaries from the 10 sample matches
-- Dynamic-event pitch maps for off-ball runs, passing options, possessions, dangerous actions, and xThreat
-- Optional tracking-data detection for Git LFS JSONL files
+- Full compact dynamic-event exports for off-ball runs, passing options, possessions, defensive pressure, dangerous actions, and xThreat
+- Match Intelligence views for run paths, speed bands, run subtypes, zones, phase context, team comparison, and threat leaderboards
+- Optional tracking-data detection and loading for real Git LFS JSONL files
 - A static GitHub Pages front door that loads exported dashboard data and embeds the Streamlit app
 
 ## Local Setup
@@ -54,7 +55,7 @@ tests/                       Contract and scoring tests
 
 ## Tracking Data
 
-The upstream tracking JSONL files are stored with Git LFS. A normal raw GitHub download returns small pointer files, so the project treats tracking as optional. The Streamlit app reports whether real tracking files are available and keeps the aggregate, phase, and event analysis fully usable without them.
+The upstream tracking JSONL files are stored with Git LFS. A normal raw GitHub download returns small pointer files, so the project treats tracking as optional. The Streamlit app reports whether real tracking files are available, and the reusable data layer can load and flatten real local JSONL files when present. Aggregate, phase and dynamic-event analysis remains fully usable without them.
 
 ## Data Credit
 
@@ -72,7 +73,7 @@ For fully automated first-time enablement, create a repository secret named `PAG
 
 ## Archetype Interpretation
 
-The app assigns archetypes after comparing players within their role group, so a full-back is not judged against a centre forward. The six labels are intended as tactical reads, not scouting grades by themselves:
+The app first consolidates aggregate rows to one profile per player, then assigns archetypes after comparing players within their primary role group, so a full-back is not judged against a centre forward and a player is not classified differently for every context row. The six labels are intended as tactical reads, not scouting grades by themselves:
 
 - `Depth runner`: vertical runner with strong attacking movement and sprint-threat scores.
 - `Connector creator`: link player with high passing progression and enough movement value to connect attacks.

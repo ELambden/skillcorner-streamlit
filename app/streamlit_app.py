@@ -16,6 +16,8 @@ from skillcorner_intelligence.paths import (
     ANALYSIS_JSON,
     EVENT_SAMPLE_CSV,
     MATCH_SUMMARY_CSV,
+    MATCH_TEAM_SUMMARY_CSV,
+    OFFBALL_RUNS_CSV,
     PHASE_TIMELINE_CSV,
     PLAYER_PROFILES_CSV,
     TEAM_SUMMARY_CSV,
@@ -27,9 +29,11 @@ from skillcorner_intelligence.presentation import (
     event_label,
     metric_label,
     phase_label,
+    run_subtype_label,
+    speed_band_label,
     tracking_label,
 )
-from skillcorner_intelligence.visualization import pitch_figure, radar_figure
+from skillcorner_intelligence.visualization import offball_run_figure, pitch_figure, radar_figure
 
 st.set_page_config(page_title="SkillCorner Football Intelligence Lab", layout="wide")
 
@@ -61,8 +65,12 @@ SCORE_COLUMNS = [
 PLAYER_TABLE_COLUMNS = [
     "player_name",
     "team_name",
+    "teams_played",
     "position_group",
+    "position_groups",
     "minutes",
+    "count_match",
+    "profile_context_count",
     "archetype",
     "profile_score",
     "athletic_load_score",
@@ -74,11 +82,31 @@ PLAYER_TABLE_COLUMNS = [
     "pass_pct_completed",
 ]
 
+MATCH_TEAM_COLUMNS = [
+    "team_name",
+    "events",
+    "player_possessions",
+    "off_ball_runs",
+    "high_intensity_runs",
+    "received_runs",
+    "targeted_runs",
+    "dangerous_events",
+    "xthreat_total",
+    "longest_run_meters",
+    "longest_run_player",
+    "top_xthreat_player",
+]
+
 COLUMN_CONFIG = {
     "player_name": st.column_config.TextColumn("Player"),
-    "team_name": st.column_config.TextColumn("Club"),
-    "position_group": st.column_config.TextColumn("Role group"),
-    "minutes": st.column_config.NumberColumn("Minutes", format="%.0f"),
+    "player_short_name": st.column_config.TextColumn("Short name"),
+    "team_name": st.column_config.TextColumn("Primary club"),
+    "teams_played": st.column_config.TextColumn("Clubs in sample"),
+    "position_group": st.column_config.TextColumn("Primary role"),
+    "position_groups": st.column_config.TextColumn("Roles in sample"),
+    "minutes": st.column_config.NumberColumn("Evidence minutes", format="%.0f"),
+    "count_match": st.column_config.NumberColumn("Appearances", format="%d"),
+    "profile_context_count": st.column_config.NumberColumn("Contexts", format="%d"),
     "archetype": st.column_config.TextColumn("Archetype"),
     "profile_score": st.column_config.ProgressColumn("Overall profile", min_value=0, max_value=100, format="%.1f"),
     "athletic_load_score": st.column_config.ProgressColumn("Athletic load", min_value=0, max_value=100, format="%.1f"),
@@ -89,6 +117,17 @@ COLUMN_CONFIG = {
     "total_metersperminute_full_all": st.column_config.NumberColumn("Metres per minute", format="%.1f"),
     "pass_pct_completed": st.column_config.NumberColumn("Pass completion", format="%.1f%%"),
     "similarity_gap": st.column_config.NumberColumn("Profile difference", format="%.1f"),
+    "events": st.column_config.NumberColumn("Actions", format="%d"),
+    "player_possessions": st.column_config.NumberColumn("Possessions", format="%d"),
+    "off_ball_runs": st.column_config.NumberColumn("Off-ball runs", format="%d"),
+    "high_intensity_runs": st.column_config.NumberColumn("HI runs", format="%d"),
+    "received_runs": st.column_config.NumberColumn("Received", format="%d"),
+    "targeted_runs": st.column_config.NumberColumn("Targeted", format="%d"),
+    "dangerous_events": st.column_config.NumberColumn("Dangerous", format="%d"),
+    "xthreat_total": st.column_config.NumberColumn("Threat value", format="%.2f"),
+    "distance_covered": st.column_config.NumberColumn("Run distance", format="%.1f m"),
+    "speed_avg": st.column_config.NumberColumn("Avg speed", format="%.1f km/h"),
+    "xthreat": st.column_config.NumberColumn("xThreat", format="%.3f"),
 }
 
 
@@ -99,9 +138,13 @@ def load_csv(path: Path) -> pd.DataFrame:
         st.stop()
     frame = pd.read_csv(path)
     text_columns = {
-        "player_name", "player_short_name", "team_name", "position_group", "archetype", "phase_type",
-        "phase_label", "match_label", "event_type", "event_label", "event_subtype", "time_start",
-        "team_in_possession_phase_type", "team_out_of_possession_phase_type", "tracking_status", "tracking_label",
+        "player_name", "player_short_name", "player_birthdate", "team_name", "teams_played",
+        "position_group", "position_groups", "archetype", "phase_type", "phase_label", "match_label",
+        "event_type", "event_label", "event_subtype", "run_type_label", "speed_avg_band", "speed_band_label",
+        "time_start", "time_end", "team_shortname", "team_in_possession_shortname", "channel_start",
+        "channel_end", "third_start", "third_end", "trajectory_direction", "pass_outcome", "pass_range",
+        "team_in_possession_phase_type", "team_out_of_possession_phase_type", "defensive_shape_label",
+        "tracking_status", "tracking_label", "longest_run_player", "top_xthreat_player",
     }
     for column in frame.columns:
         if column not in text_columns:
@@ -118,11 +161,13 @@ def load_summary() -> dict[str, Any]:
     return json.loads(ANALYSIS_JSON.read_text(encoding="utf-8"))
 
 
-def prepare_display_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+def prepare_display_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, Any]]:
     players = load_csv(PLAYER_PROFILES_CSV).copy()
     teams = load_csv(TEAM_SUMMARY_CSV).copy()
     matches = load_csv(MATCH_SUMMARY_CSV).copy()
     events = load_csv(EVENT_SAMPLE_CSV).copy()
+    offball_runs = load_csv(OFFBALL_RUNS_CSV).copy()
+    match_teams = load_csv(MATCH_TEAM_SUMMARY_CSV).copy()
     phases = load_csv(PHASE_TIMELINE_CSV).copy()
     summary = load_summary()
 
@@ -130,11 +175,15 @@ def prepare_display_data() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd
     events["event_label"] = events["event_type"].map(event_label)
     if "event_subtype" in events:
         events["action_detail"] = events["event_subtype"].fillna("").map(lambda value: str(value).replace("_", " ").title() if value else "")
+    offball_runs["run_type_label"] = offball_runs["event_subtype"].map(run_subtype_label)
+    offball_runs["speed_band_label"] = offball_runs["speed_avg_band"].map(speed_band_label)
+    offball_runs["phase_label"] = offball_runs["team_in_possession_phase_type"].map(phase_label)
+    offball_runs["defensive_shape_label"] = offball_runs["team_out_of_possession_phase_type"].map(defensive_phase_label)
     phases["phase_label"] = phases["team_in_possession_phase_type"].map(phase_label)
     phases["defensive_shape_label"] = phases["team_out_of_possession_phase_type"].map(defensive_phase_label)
     matches["tracking_label"] = matches["tracking_status"].map(tracking_label)
-    players["profile_key"] = players.index.astype(str) + " | " + players["player_name"].astype(str) + " | " + players["team_name"].astype(str)
-    return players, teams, matches, events, phases, summary
+    players["profile_key"] = players["player_id"].astype(str) + " | " + players["player_name"].astype(str) + " | " + players["team_name"].astype(str)
+    return players, teams, matches, events, offball_runs, match_teams, phases, summary
 
 
 def archetype_guide_frame() -> pd.DataFrame:
@@ -173,7 +222,14 @@ def selected_phase_from_label(labels: list[str], selected: str, raw_values: pd.S
     return str(lookup.get(selected, selected))
 
 
-players, teams, matches, events, phases, summary = prepare_display_data()
+def options_from_labels(frame: pd.DataFrame, label_column: str, value_column: str) -> dict[str, str]:
+    if frame.empty or label_column not in frame or value_column not in frame:
+        return {}
+    pairs = frame[[label_column, value_column]].dropna().drop_duplicates().sort_values(label_column)
+    return dict(zip(pairs[label_column].astype(str), pairs[value_column].astype(str), strict=False))
+
+
+players, teams, matches, events, offball_runs, match_teams, phases, summary = prepare_display_data()
 
 st.title("SkillCorner Football Intelligence Lab")
 st.caption("A-League 2024/2025 open-data analysis across physical output, attacking movement, passing, tactical phases and match actions.")
@@ -182,9 +238,10 @@ with st.sidebar:
     st.header("Filters")
     positions = ["All", *sorted(players["position_group"].dropna().astype(str).unique())]
     team_options = ["All", *sorted(players["team_name"].dropna().astype(str).unique())]
-    position = st.selectbox("Role group", positions)
-    team = st.selectbox("Club", team_options)
-    min_minutes = st.slider("Minimum minutes", 0, int(max(players["minutes"].max(), 1)), 60, 30)
+    position = st.selectbox("Primary role", positions)
+    team = st.selectbox("Primary club", team_options)
+    max_minutes = int(max(players["minutes"].max(), 1))
+    min_minutes = st.slider("Minimum evidence minutes", 0, max_minutes, min(300, max_minutes), 60)
     min_profile = st.slider("Minimum overall profile", 0, 100, 0, 5)
 
 filtered = players.copy()
@@ -205,10 +262,10 @@ tab_league, tab_players, tab_archetypes, tab_matches, tab_tracking, tab_notes = 
 
 with tab_league:
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Players", f"{len(players):,}")
+    c1.metric("Players", f"{players['player_id'].nunique():,}")
     c2.metric("Clubs", f"{players['team_id'].nunique():,}")
     c3.metric("Matches", f"{len(matches):,}")
-    c4.metric("Sampled match actions", f"{len(events):,}")
+    c4.metric("Dynamic actions", f"{len(events):,}")
 
     left, right = st.columns([1.15, 1])
     with left:
@@ -219,9 +276,9 @@ with tab_league:
             y="player_short_name",
             color="archetype",
             orientation="h",
-            hover_data={"player_name": True, "team_name": True, "position_group": True, "profile_score": ":.1f", "player_short_name": False},
+            hover_data={"player_name": True, "team_name": True, "position_group": True, "minutes": ":.0f", "profile_score": ":.1f", "player_short_name": False},
             labels={"profile_score": "Overall profile", "player_short_name": "Player", "archetype": "Archetype"},
-            title="Top player profiles in the current filter",
+            title="Top consolidated player profiles in the current filter",
         )
         fig.update_layout(height=620, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Overall profile")
         st.plotly_chart(fig, width="stretch")
@@ -242,50 +299,53 @@ with tab_league:
         st.plotly_chart(fig, width="stretch")
 
 with tab_players:
-    search = st.text_input("Search player, club or archetype", "")
+    search = st.text_input("Search player, club, role or archetype", "")
     table = filtered.copy()
     if search:
         mask = (
             table["player_name"].astype(str).str.contains(search, case=False, na=False)
-            | table["team_name"].astype(str).str.contains(search, case=False, na=False)
+            | table["teams_played"].astype(str).str.contains(search, case=False, na=False)
+            | table["position_groups"].astype(str).str.contains(search, case=False, na=False)
             | table["archetype"].astype(str).str.contains(search, case=False, na=False)
         )
         table = table.loc[mask]
 
     st.dataframe(
-        table[PLAYER_TABLE_COLUMNS].sort_values("profile_score", ascending=False),
+        table[[column for column in PLAYER_TABLE_COLUMNS if column in table]].sort_values("profile_score", ascending=False),
         width="stretch",
         hide_index=True,
         column_config=COLUMN_CONFIG,
     )
 
 with tab_archetypes:
-    st.subheader("How the archetypes work")
-    st.write(
-        "Each player is first compared with players in the same role group. The archetype then describes the strongest tactical signal in that profile: movement behind, box movement, progression passing, linking play, repeat physical output, or a rounded contribution without a single dominant spike."
-    )
-
     guide_left, guide_right = st.columns([1, 1])
     with guide_left:
-        st.dataframe(archetype_guide_frame(), width="stretch", hide_index=True)
-    with guide_right:
+        st.subheader("Archetype Mix")
         archetype_counts = filtered["archetype"].value_counts().reset_index()
         archetype_counts.columns = ["Archetype", "Players"]
         fig = px.bar(archetype_counts, x="Players", y="Archetype", orientation="h", title="Archetype mix in the current filter")
         fig.update_layout(height=360, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Players")
         st.plotly_chart(fig, width="stretch")
+    with guide_right:
+        st.subheader("Score Shape")
+        score_mix = filtered[SCORE_COLUMNS].mean().reset_index()
+        score_mix.columns = ["Score", "Average"]
+        score_mix["Score"] = score_mix["Score"].map(lambda value: SCORE_LABELS.get(value, value))
+        fig = px.bar(score_mix, x="Average", y="Score", orientation="h", range_x=[0, 100], title="Average score family in current filter")
+        fig.update_layout(height=360, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", yaxis_title="", xaxis_title="Position-group percentile score")
+        st.plotly_chart(fig, width="stretch")
 
     player_labels = filtered["profile_key"].tolist()
     selected_label = st.selectbox("Inspect player", player_labels if player_labels else [""])
-    selected_index = int(selected_label.split(" | ")[0]) if selected_label else -1
-    selected = filtered.loc[filtered.index == selected_index].head(1)
+    selected_id = pd.to_numeric(selected_label.split(" | ")[0], errors="coerce") if selected_label else None
+    selected = filtered.loc[filtered["player_id"] == selected_id].head(1) if selected_id is not None else pd.DataFrame()
 
     if not selected.empty:
         row = selected.iloc[0]
         left, right = st.columns([0.95, 1.05])
         with left:
             st.subheader(row["player_name"])
-            st.caption(f"{row['team_name']} - {row['position_group']} - {row['archetype']}")
+            st.caption(f"{row['team_name']} - {row['position_group']} - {row['archetype']} - {float(row['minutes']):.0f} evidence minutes")
             st.plotly_chart(radar_figure(row), width="stretch")
             render_archetype_panel(str(row["archetype"]))
         with right:
@@ -304,7 +364,7 @@ with tab_archetypes:
                 color="archetype",
                 size="profile_score",
                 hover_name="player_name",
-                hover_data={"team_name": True, "position_group": True, "profile_score": ":.1f", "map_x": False, "map_y": False},
+                hover_data={"team_name": True, "position_group": True, "minutes": ":.0f", "profile_score": ":.1f", "map_x": False, "map_y": False},
                 labels={"archetype": "Archetype"},
                 title="Role map from tactical score families",
             )
@@ -316,9 +376,9 @@ with tab_archetypes:
         for column in SCORE_COLUMNS:
             comp[f"delta_{column}"] = (pd.to_numeric(comp[column], errors="coerce") - float(row[column])).abs()
         comp["similarity_gap"] = comp[[f"delta_{column}" for column in SCORE_COLUMNS]].mean(axis=1)
-        st.subheader("Most similar profiles")
+        st.subheader("Most Similar Profiles")
         st.dataframe(
-            comp.loc[comp.index != selected_index]
+            comp.loc[comp["player_id"] != row["player_id"]]
             .nsmallest(8, "similarity_gap")[["player_name", "team_name", "position_group", "archetype", "profile_score", "similarity_gap"]],
             width="stretch",
             hide_index=True,
@@ -328,35 +388,97 @@ with tab_archetypes:
 with tab_matches:
     match_label = st.selectbox("Match", matches["match_label"].tolist())
     match_id = int(matches.loc[matches["match_label"] == match_label, "match_id"].iloc[0])
-    match_events = events.loc[events["match_id"] == match_id].copy()
-    event_lookup = {event_label(value): value for value in sorted(match_events["event_type"].dropna().astype(str).unique())}
-    event_choice = st.selectbox("Action type", ["All actions", *sorted(event_lookup)])
-    if event_choice != "All actions":
-        match_events = match_events.loc[match_events["event_type"] == event_lookup[event_choice]]
-
-    c1, c2, c3, c4 = st.columns(4)
     match_row = matches.loc[matches["match_id"] == match_id].iloc[0]
+    match_events = events.loc[events["match_id"] == match_id].copy()
+    match_runs = offball_runs.loc[offball_runs["match_id"] == match_id].copy()
+    match_team_view = match_teams.loc[match_teams["match_id"] == match_id].copy()
+
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Score", str(match_row["score"]))
     c2.metric("Actions", f"{int(match_row['events']):,}")
-    c3.metric("Dangerous actions", f"{int(match_row['dangerous_events']):,}")
-    c4.metric("Threat value", f"{float(match_row['xthreat_total']):.2f}")
-    st.plotly_chart(pitch_figure(match_events, title=match_label), width="stretch")
+    c3.metric("Off-ball runs", f"{int(match_row['off_ball_runs']):,}")
+    c4.metric("HI runs", f"{int(match_row['high_intensity_runs']):,}")
+    c5.metric("Threat value", f"{float(match_row['xthreat_total']):.2f}")
 
-    phase_view = phases.loc[phases["match_id"] == match_id].copy()
-    if not phase_view.empty:
-        phase_counts = phase_view.groupby(["team_in_possession_shortname", "phase_label"], as_index=False)["duration"].sum()
-        phase_counts["minutes"] = phase_counts["duration"] / 60
-        fig = px.bar(
-            phase_counts,
-            x="phase_label",
-            y="minutes",
-            color="team_in_possession_shortname",
-            barmode="group",
-            title="Attacking phase minutes",
-            labels={"phase_label": "Attacking phase", "minutes": "Minutes", "team_in_possession_shortname": "Club"},
+    filter_cols = st.columns(4)
+    with filter_cols[0]:
+        team_filter = st.selectbox("Team", ["Both", *sorted(match_events["team_shortname"].dropna().astype(str).unique())])
+    with filter_cols[1]:
+        event_lookup = options_from_labels(match_events, "event_label", "event_type")
+        event_choice = st.selectbox("Action type", ["All actions", *event_lookup.keys()])
+    with filter_cols[2]:
+        run_lookup = options_from_labels(match_runs, "run_type_label", "event_subtype")
+        run_choice = st.selectbox("Run type", ["All run types", *run_lookup.keys()])
+    with filter_cols[3]:
+        speed_lookup = options_from_labels(match_runs, "speed_band_label", "speed_avg_band")
+        speed_choice = st.selectbox("Speed band", ["All speeds", *speed_lookup.keys()])
+
+    if team_filter != "Both":
+        match_events = match_events.loc[match_events["team_shortname"] == team_filter]
+        match_runs = match_runs.loc[match_runs["team_shortname"] == team_filter]
+    if event_choice != "All actions":
+        match_events = match_events.loc[match_events["event_type"] == event_lookup[event_choice]]
+    if run_choice != "All run types":
+        match_runs = match_runs.loc[match_runs["event_subtype"] == run_lookup[run_choice]]
+    if speed_choice != "All speeds":
+        match_runs = match_runs.loc[match_runs["speed_avg_band"] == speed_lookup[speed_choice]]
+
+    view_mode = st.radio("Pitch view", ["Dynamic actions", "Off-ball run paths"], horizontal=True)
+    if view_mode == "Dynamic actions":
+        st.plotly_chart(pitch_figure(match_events, title=f"{match_label}: dynamic actions"), width="stretch")
+    else:
+        st.plotly_chart(offball_run_figure(match_runs, title=f"{match_label}: off-ball run paths"), width="stretch")
+
+    left, right = st.columns([1.05, 0.95])
+    with left:
+        st.subheader("Team Match Profile")
+        st.dataframe(
+            match_team_view[[column for column in MATCH_TEAM_COLUMNS if column in match_team_view]],
+            width="stretch",
+            hide_index=True,
+            column_config=COLUMN_CONFIG,
         )
-        fig.update_layout(height=420, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", xaxis_title="", yaxis_title="Minutes")
-        st.plotly_chart(fig, width="stretch")
+
+        phase_view = phases.loc[phases["match_id"] == match_id].copy()
+        if not phase_view.empty:
+            phase_counts = phase_view.groupby(["team_in_possession_shortname", "phase_label"], as_index=False)["duration"].sum()
+            phase_counts["minutes"] = phase_counts["duration"] / 60
+            fig = px.bar(
+                phase_counts,
+                x="phase_label",
+                y="minutes",
+                color="team_in_possession_shortname",
+                barmode="group",
+                title="Attacking phase minutes",
+                labels={"phase_label": "Attacking phase", "minutes": "Minutes", "team_in_possession_shortname": "Club"},
+            )
+            fig.update_layout(height=420, paper_bgcolor="#f3f2f2", plot_bgcolor="#f3f2f2", xaxis_title="", yaxis_title="Minutes")
+            st.plotly_chart(fig, width="stretch")
+
+    with right:
+        st.subheader("Runs To Inspect")
+        if match_runs.empty:
+            st.info("No off-ball runs match the selected filters.")
+        else:
+            run_table = match_runs.sort_values(["dangerous", "received", "xthreat", "distance_covered"], ascending=False)
+            st.dataframe(
+                run_table[["time_start", "player_name", "team_shortname", "run_type_label", "speed_band_label", "distance_covered", "targeted", "received", "dangerous", "xthreat", "phase_label"]].head(16),
+                width="stretch",
+                hide_index=True,
+                column_config=COLUMN_CONFIG,
+            )
+
+        st.subheader("Highest Threat Actions")
+        threat_table = match_events.sort_values("xthreat", ascending=False).head(12) if "xthreat" in match_events else pd.DataFrame()
+        if threat_table.empty:
+            st.info("No threat-valued actions match the selected filters.")
+        else:
+            st.dataframe(
+                threat_table[["time_start", "event_label", "player_name", "team_shortname", "event_subtype", "xthreat", "dangerous", "third_start", "third_end"]],
+                width="stretch",
+                hide_index=True,
+                column_config=COLUMN_CONFIG,
+            )
 
 with tab_tracking:
     tracking = pd.DataFrame(summary.get("tracking", []))
@@ -382,15 +504,23 @@ with tab_tracking:
         )
         if pointer_count:
             st.markdown(
-                "<p class='note'>The upstream tracking files are stored with Git LFS. The current checkout has lightweight placeholders, so this version keeps the full aggregate, phase and action analysis available while reserving tracking animation for local checkouts with real LFS objects.</p>",
+                "<p class='note'>The upstream tracking files are stored with Git LFS. This hosted sample keeps aggregate, phase and dynamic-event analysis fully available, and tracking-specific animation can activate in local checkouts with real JSONL files.</p>",
                 unsafe_allow_html=True,
             )
 
 with tab_notes:
     st.subheader("Method")
     st.write(
-        "The app joins physical, attacking movement and passing aggregates, compares players within their role group, then builds composite tactical scores. Match views use dynamic actions and phases of play to show where attacks developed and which broad tactical states appeared most often."
+        "The app consolidates each player into one sample-level profile before scoring. Physical, attacking movement and passing aggregate rows are combined by player ID; primary club and role are selected by evidence minutes; all observed clubs and roles remain visible. Players are then compared within their primary role group to build percentiles, z-scores, composite tactical scores and archetypes."
     )
+    st.write(
+        "Match views use compact exports from the full dynamic-event files rather than a capped sample. The off-ball run views expose subtype, zones, speed band, distance, receiving and targeting flags, dangerous flags, xThreat and phase context."
+    )
+    st.subheader("How The Archetypes Work")
+    st.write(
+        "Each player is compared with players in the same role group. The archetype describes the strongest tactical signal in that consolidated profile: movement behind, box movement, progression passing, linking play, repeat physical output, or a rounded contribution without a single dominant spike."
+    )
+    st.dataframe(archetype_guide_frame(), width="stretch", hide_index=True)
     st.subheader("Score Glossary")
     glossary = summary.get("metricGlossary", {})
     st.dataframe(
@@ -400,5 +530,5 @@ with tab_notes:
     )
     st.subheader("Source Limits")
     st.write(
-        "The sample is 10 A-League matches plus season aggregate files from SkillCorner Open Data. Raw tracking requires Git LFS and includes the identity and smoothing caveats noted by SkillCorner."
+        "The sample is 10 A-League matches plus season aggregate files from SkillCorner Open Data. Raw tracking requires Git LFS and includes the identity and smoothing caveats noted by SkillCorner. The dashboard should be read as a portfolio-grade analytical sample, not a production scouting model."
     )

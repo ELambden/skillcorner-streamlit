@@ -36,7 +36,7 @@
       <section id="players" class="band">
         <div class="section-head">
           <p class="eyebrow">Player Finder</p>
-          <h2>Scoutable profiles instead of raw metric lists.</h2>
+          <h2>Consolidated player profiles instead of repeated context rows.</h2>
         </div>
         <div id="top-player-grid" class="player-grid"></div>
       </section>
@@ -53,7 +53,7 @@
         <div class="section-head">
           <p class="eyebrow">Archetype Lab</p>
           <h2>Role labels with a clear statistical reason.</h2>
-          <p class="standfirst">Each archetype is driven by position-group comparisons across athletic load, sprint threat, attacking movement, passing progression and playing-time reliability.</p>
+          <p class="standfirst">Each archetype is now assigned once per consolidated player profile, using position-group comparisons across athletic load, sprint threat, attacking movement, passing progression and playing-time reliability.</p>
         </div>
         <div id="archetype-grid" class="archetype-grid"></div>
       </section>
@@ -61,16 +61,21 @@
       <section id="matches" class="band muted">
         <div class="section-head">
           <p class="eyebrow">Match Intelligence</p>
-          <h2>Match action summaries make the sample matches browsable.</h2>
+          <h2>Dynamic events make the sample matches browsable.</h2>
         </div>
         <div id="match-grid" class="match-grid"></div>
+        <div class="section-head compact">
+          <p class="eyebrow">Off-Ball Runs</p>
+          <h3>Selected high-value runs from the full dynamic-event export.</h3>
+        </div>
+        <div id="run-grid" class="run-grid"></div>
       </section>
 
       <section id="app" class="app-section">
         <div class="section-head">
           <p class="eyebrow">Live App</p>
           <h2>Open the full Streamlit lab.</h2>
-          <p class="source-line">Static data snapshot loading…</p>
+          <p class="source-line">Static data snapshot loading...</p>
         </div>
         <div class="embed-shell">
           <iframe title="SkillCorner Streamlit app" id="streamlit-frame" src="about:blank"></iframe>

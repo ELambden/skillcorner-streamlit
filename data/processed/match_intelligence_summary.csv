@@ -1,11 +1,11 @@
-match_id,match_label,date_time,score,home_team,away_team,events,player_possessions,off_ball_runs,passing_options,dangerous_events,xthreat_total,tracking_status,tracking_bytes
-2017461,Melbourne V FC v Auckland FC,2025-05-17T09:35:00Z,0-1,Melbourne V FC,Auckland FC,4188,839,460,2068,421,35.058,lfs-pointer,133
-2015213,Western United v Auckland FC,2025-05-03T08:00:00Z,4-2,Western United,Auckland FC,4582,925,530,2294,350,34.176,lfs-pointer,134
-2013725,Western United v Sydney FC,2025-04-27T07:00:00Z,1-0,Western United,Sydney FC,4999,999,512,2534,501,43.54,lfs-pointer,133
-2011166,Wellington P FC v Melbourne V FC,2025-04-12T05:00:00Z,2-3,Wellington P FC,Melbourne V FC,3966,784,437,1975,450,36.435,lfs-pointer,133
-2006229,Melbourne City v Macarthur FC,2025-03-07T08:35:00Z,2-0,Melbourne City,Macarthur FC,4991,994,510,2587,394,32.968,lfs-pointer,133
-1996435,Sydney FC v Adelaide United,2025-02-01T06:00:00Z,4-1,Sydney FC,Adelaide United,5292,1038,534,2665,501,44.142,lfs-pointer,133
-1953632,CC Mariners v Melbourne City,2024-12-31T08:00:00Z,1-1,CC Mariners,Melbourne City,4823,997,457,2587,252,23.011,lfs-pointer,133
-1925299,Brisbane FC v Perth Glory,2024-12-21T06:00:00Z,0-1,Brisbane FC,Perth Glory,5220,1062,495,2733,479,37.119,lfs-pointer,133
-1899585,Auckland FC v Wellington P FC,2024-12-07T04:00:00Z,2-1,Auckland FC,Wellington P FC,4713,929,468,2387,465,35.157,lfs-pointer,133
-1886347,Auckland FC v Newcastle,2024-11-30T04:00:00Z,2-0,Auckland FC,Newcastle,5079,999,599,2544,389,34.22,lfs-pointer,133
+match_id,match_label,date_time,score,home_team,away_team,events,player_possessions,off_ball_runs,passing_options,on_ball_engagements,dangerous_events,received_runs,targeted_runs,high_intensity_runs,xthreat_total,longest_run_meters,longest_run_player,top_xthreat_player,tracking_status,tracking_bytes
+2017461,Melbourne V FC v Auckland FC,2025-05-17T09:35:00Z,0-1,Melbourne V FC,Auckland FC,4188,839,460,2068,821,421,127,172,137,35.058,57.92,L. Rogerson,L. Rogerson,lfs-pointer,133
+2015213,Western United v Auckland FC,2025-05-03T08:00:00Z,4-2,Western United,Auckland FC,4582,925,530,2294,833,350,146,188,146,34.176,55.82,M. Ruhs,O. Lavale,lfs-pointer,134
+2013725,Western United v Sydney FC,2025-04-27T07:00:00Z,1-0,Western United,Sydney FC,4999,999,512,2534,954,501,148,197,131,43.54,57.34,O. Lavale,N. Botić,lfs-pointer,133
+2011166,Wellington P FC v Melbourne V FC,2025-04-12T05:00:00Z,2-3,Wellington P FC,Melbourne V FC,3966,784,437,1975,770,450,109,145,130,36.435,72.85,N. Velupillay,N. Vergos,lfs-pointer,133
+2006229,Melbourne City v Macarthur FC,2025-03-07T08:35:00Z,2-0,Melbourne City,Macarthur FC,4991,994,510,2587,900,394,143,187,78,32.968,48.59,N. Atkinson,M. Leckie,lfs-pointer,133
+1996435,Sydney FC v Adelaide United,2025-02-01T06:00:00Z,4-1,Sydney FC,Adelaide United,5292,1038,534,2665,1055,501,150,197,138,44.142,64.02,D. Pierias,A. Goodwin,lfs-pointer,133
+1953632,CC Mariners v Melbourne City,2024-12-31T08:00:00Z,1-1,CC Mariners,Melbourne City,4823,997,457,2587,782,252,127,156,81,23.011,45.58,Mikael Doka,N. Paull,lfs-pointer,133
+1925299,Brisbane FC v Perth Glory,2024-12-21T06:00:00Z,0-1,Brisbane FC,Perth Glory,5220,1062,495,2733,930,479,129,163,84,37.119,53.82,T. Ostler,K. Ngo,lfs-pointer,133
+1899585,Auckland FC v Wellington P FC,2024-12-07T04:00:00Z,2-1,Auckland FC,Wellington P FC,4713,929,468,2387,929,465,124,163,119,35.157,66.5,F. Gallegos,L. Gillion,lfs-pointer,133
+1886347,Auckland FC v Newcastle,2024-11-30T04:00:00Z,2-0,Auckland FC,Newcastle,5079,999,599,2544,937,389,148,188,132,34.22,61.28,L. Gillion,L. Gillion,lfs-pointer,133
