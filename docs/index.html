@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SkillCorner Football Intelligence Lab</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-nav">
+      <a class="brand" href="index.html">SkillCorner Intelligence Lab</a>
+      <nav>
+        <a href="#players">Players</a>
+        <a href="#teams">Teams</a>
+        <a href="#matches">Matches</a>
+        <a href="#app">Streamlit</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">AUS A-League 2024/2025 · SkillCorner Open Data</p>
+          <h1>Football intelligence from broadcast tracking data.</h1>
+          <p class="standfirst">A compact analyst dashboard combining physical output, off-ball runs, passing, dynamic events and phases of play into scoutable player profiles and match intelligence.</p>
+        </div>
+        <div class="scoreboard" aria-label="Data snapshot">
+          <div><span>Players</span><strong id="players-count">-</strong></div>
+          <div><span>Teams</span><strong id="teams-count">-</strong></div>
+          <div><span>Matches</span><strong id="matches-count">-</strong></div>
+          <div><span>Events</span><strong id="events-count">-</strong></div>
+        </div>
+      </section>
+
+      <section id="players" class="band">
+        <div class="section-head">
+          <p class="eyebrow">Player Finder</p>
+          <h2>Scoutable profiles instead of raw metric lists.</h2>
+        </div>
+        <div id="top-player-grid" class="player-grid"></div>
+      </section>
+
+      <section id="teams" class="band muted">
+        <div class="section-head">
+          <p class="eyebrow">Team Style</p>
+          <h2>Phase shares expose how sides create and defend.</h2>
+        </div>
+        <div id="team-style-grid" class="team-grid"></div>
+      </section>
+
+      <section id="matches" class="band">
+        <div class="section-head">
+          <p class="eyebrow">Match Intelligence</p>
+          <h2>Dynamic event summaries make the sample matches browsable.</h2>
+        </div>
+        <div id="match-grid" class="match-grid"></div>
+      </section>
+
+      <section id="app" class="app-section">
+        <div class="section-head">
+          <p class="eyebrow">Live App</p>
+          <h2>Open the full Streamlit lab.</h2>
+          <p class="source-line">Static data snapshot loading…</p>
+        </div>
+        <div class="embed-shell">
+          <iframe title="SkillCorner Streamlit app" id="streamlit-frame" src="about:blank"></iframe>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

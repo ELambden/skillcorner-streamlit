@@ -1,0 +1,94 @@
+team_id,team_name,phase_type,phase_minutes,phase_share_pct
+866,Adelaide United,build_up,5.752,23.56
+866,Adelaide United,chaotic,2.132,8.73
+866,Adelaide United,create,9.282,38.02
+866,Adelaide United,direct,0.663,2.72
+866,Adelaide United,finish,4.825,19.76
+866,Adelaide United,quick_break,0.187,0.77
+866,Adelaide United,set_play,0.988,4.05
+866,Adelaide United,transition,0.583,2.39
+867,Wellington P FC,build_up,8.615,19.71
+867,Wellington P FC,chaotic,6.518,14.91
+867,Wellington P FC,create,15.075,34.48
+867,Wellington P FC,direct,2.6100000000000003,5.97
+867,Wellington P FC,finish,6.748,15.44
+867,Wellington P FC,quick_break,0.5469999999999999,1.25
+867,Wellington P FC,set_play,1.96,4.48
+867,Wellington P FC,transition,1.642,3.76
+868,Melbourne V FC,build_up,5.244,9.58
+868,Melbourne V FC,chaotic,5.739,10.48
+868,Melbourne V FC,create,19.275,35.2
+868,Melbourne V FC,direct,2.452,4.48
+868,Melbourne V FC,finish,15.022000000000002,27.43
+868,Melbourne V FC,quick_break,0.617,1.13
+868,Melbourne V FC,set_play,3.8979999999999997,7.12
+868,Melbourne V FC,transition,2.513,4.59
+869,Sydney FC,build_up,8.968,15.7
+869,Sydney FC,chaotic,5.577,9.77
+869,Sydney FC,create,20.247,35.46
+869,Sydney FC,direct,1.968,3.45
+869,Sydney FC,finish,14.168,24.81
+869,Sydney FC,quick_break,0.865,1.51
+869,Sydney FC,set_play,3.592,6.29
+869,Sydney FC,transition,1.718,3.01
+870,CC Mariners,build_up,5.518,29.66
+870,CC Mariners,chaotic,2.122,11.4
+870,CC Mariners,create,7.363,39.57
+870,CC Mariners,direct,0.947,5.09
+870,CC Mariners,finish,1.647,8.85
+870,CC Mariners,quick_break,0.077,0.41
+870,CC Mariners,set_play,0.587,3.15
+870,CC Mariners,transition,0.345,1.85
+871,Perth Glory,build_up,5.402,23.06
+871,Perth Glory,chaotic,3.313,14.14
+871,Perth Glory,create,8.033,34.29
+871,Perth Glory,direct,1.47,6.28
+871,Perth Glory,finish,4.223,18.03
+871,Perth Glory,quick_break,0.153,0.65
+871,Perth Glory,set_play,0.153,0.65
+871,Perth Glory,transition,0.678,2.89
+1802,Brisbane FC,build_up,4.515,12.63
+1802,Brisbane FC,chaotic,1.982,5.54
+1802,Brisbane FC,create,13.87,38.8
+1802,Brisbane FC,direct,1.1,3.08
+1802,Brisbane FC,finish,12.008,33.59
+1802,Brisbane FC,quick_break,1.353,3.78
+1802,Brisbane FC,set_play,0.92,2.57
+1803,Western United,build_up,12.575,25.78
+1803,Western United,chaotic,7.712,15.81
+1803,Western United,create,16.85,34.55
+1803,Western United,direct,2.191,4.49
+1803,Western United,finish,5.155,10.57
+1803,Western United,quick_break,1.8319999999999999,3.76
+1803,Western United,set_play,1.18,2.42
+1803,Western United,transition,1.277,2.62
+1804,Macarthur FC,build_up,5.255,24.43
+1804,Macarthur FC,chaotic,2.135,9.93
+1804,Macarthur FC,create,9.212,42.83
+1804,Macarthur FC,direct,0.877,4.08
+1804,Macarthur FC,finish,2.562,11.91
+1804,Macarthur FC,quick_break,0.158,0.73
+1804,Macarthur FC,set_play,0.66,3.07
+1804,Macarthur FC,transition,0.65,3.02
+1805,Newcastle,build_up,5.895,25.41
+1805,Newcastle,chaotic,2.778,11.98
+1805,Newcastle,create,10.782,46.48
+1805,Newcastle,direct,0.603,2.6
+1805,Newcastle,finish,2.502,10.79
+1805,Newcastle,set_play,0.635,2.74
+2380,Melbourne City,build_up,9.032,13.29
+2380,Melbourne City,chaotic,3.512,5.17
+2380,Melbourne City,create,35.745,52.61
+2380,Melbourne City,direct,2.138,3.15
+2380,Melbourne City,finish,13.02,19.16
+2380,Melbourne City,quick_break,0.854,1.26
+2380,Melbourne City,set_play,2.8550000000000004,4.2
+2380,Melbourne City,transition,0.7869999999999999,1.16
+4177,Auckland FC,build_up,12.837,12.7
+4177,Auckland FC,chaotic,13.253,13.11
+4177,Auckland FC,create,36.81100000000001,36.43
+4177,Auckland FC,direct,4.3919999999999995,4.35
+4177,Auckland FC,finish,22.78,22.54
+4177,Auckland FC,quick_break,1.143,1.13
+4177,Auckland FC,set_play,5.304,5.25
+4177,Auckland FC,transition,4.5329999999999995,4.49

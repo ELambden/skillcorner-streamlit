@@ -1,0 +1,184 @@
+{
+  "generatedAt": "2026-09-03T19:12:09.074589+00:00",
+  "source": "SkillCorner Open Data, AUS A-League 2024/2025",
+  "rows": {
+    "players": 1638,
+    "teams": 12,
+    "matches": 10,
+    "eventSample": 6000,
+    "phaseRows": 4581
+  },
+  "metricGlossary": {
+    "athletic_load_score": "Composite percentile for metres per minute, high-speed running, sprint volume, accelerations and decelerations.",
+    "sprint_threat_score": "Composite percentile for high-intensity and sprint outputs, weighted toward repeat sprint actions.",
+    "off_ball_threat_score": "Composite percentile for off-ball run volume, dangerous runs, penalty-area runs and targeted/received runs.",
+    "passing_progression_score": "Composite percentile for line-breaking passes, pass-to-run completion, dangerous passes and xPass difficulty.",
+    "in_possession_minutes": "Estimated time a player or team spent while their team had possession.",
+    "out_of_possession_minutes": "Estimated time a player or team spent while their team defended.",
+    "profile_score": "Blended analyst score combining athletic, off-ball and passing value with a playing-time reliability adjustment."
+  },
+  "topPlayers": [
+    {
+      "player_name": "Jarrod Carluccio",
+      "team_name": "Perth Glory Football Club",
+      "position_group": "Full Back",
+      "profile_score": 70.59,
+      "archetype": "Depth runner",
+      "athletic_load_score": 93.59,
+      "off_ball_threat_score": 80.59,
+      "passing_progression_score": 55.79
+    },
+    {
+      "player_name": "Liam  Gillion",
+      "team_name": "Auckland FC",
+      "position_group": "Wide Attacker",
+      "profile_score": 70.18,
+      "archetype": "Depth runner",
+      "athletic_load_score": 80.95,
+      "off_ball_threat_score": 85.49,
+      "passing_progression_score": 62.76
+    },
+    {
+      "player_name": "Tate Russell",
+      "team_name": "Western United",
+      "position_group": "Central Defender",
+      "profile_score": 69.86,
+      "archetype": "Depth runner",
+      "athletic_load_score": 79.68,
+      "off_ball_threat_score": 78.83,
+      "passing_progression_score": 61.41
+    },
+    {
+      "player_name": "Jarrod Carluccio",
+      "team_name": "Perth Glory Football Club",
+      "position_group": "Full Back",
+      "profile_score": 69.13,
+      "archetype": "Depth runner",
+      "athletic_load_score": 93.59,
+      "off_ball_threat_score": 80.59,
+      "passing_progression_score": 47.43
+    },
+    {
+      "player_name": "Daniel Wilmering",
+      "team_name": "Newcastle United Jets FC",
+      "position_group": "Full Back",
+      "profile_score": 66.9,
+      "archetype": "Balanced contributor",
+      "athletic_load_score": 86.27,
+      "off_ball_threat_score": 57.96,
+      "passing_progression_score": 67.26
+    },
+    {
+      "player_name": "Anthony C\u00e1ceres",
+      "team_name": "Sydney Football Club",
+      "position_group": "Midfield",
+      "profile_score": 66.77,
+      "archetype": "Connector creator",
+      "athletic_load_score": 90.11,
+      "off_ball_threat_score": 65.57,
+      "passing_progression_score": 75.1
+    },
+    {
+      "player_name": "Jaiden Kucharski",
+      "team_name": "Sydney Football Club",
+      "position_group": "Center Forward",
+      "profile_score": 66.66,
+      "archetype": "Depth runner",
+      "athletic_load_score": 82.3,
+      "off_ball_threat_score": 80.6,
+      "passing_progression_score": 45.54
+    },
+    {
+      "player_name": "Jesse Randall",
+      "team_name": "Auckland FC",
+      "position_group": "Wide Attacker",
+      "profile_score": 66.27,
+      "archetype": "Depth runner",
+      "athletic_load_score": 59.72,
+      "off_ball_threat_score": 94.74,
+      "passing_progression_score": 50.21
+    },
+    {
+      "player_name": "Joel Bruce King",
+      "team_name": "Sydney Football Club",
+      "position_group": "Central Defender",
+      "profile_score": 66.14,
+      "archetype": "Depth runner",
+      "athletic_load_score": 74.6,
+      "off_ball_threat_score": 82.71,
+      "passing_progression_score": 67.29
+    },
+    {
+      "player_name": "Harry Politidis",
+      "team_name": "Melbourne City FC",
+      "position_group": "Wide Attacker",
+      "profile_score": 65.92,
+      "archetype": "High-output carrier",
+      "athletic_load_score": 81.32,
+      "off_ball_threat_score": 69.28,
+      "passing_progression_score": 56.38
+    }
+  ],
+  "tracking": [
+    {
+      "match_id": 2017461,
+      "match_label": "Melbourne V FC v Auckland FC",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 133
+    },
+    {
+      "match_id": 2015213,
+      "match_label": "Western United v Auckland FC",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 134
+    },
+    {
+      "match_id": 2013725,
+      "match_label": "Western United v Sydney FC",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 133
+    },
+    {
+      "match_id": 2011166,
+      "match_label": "Wellington P FC v Melbourne V FC",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 133
+    },
+    {
+      "match_id": 2006229,
+      "match_label": "Melbourne City v Macarthur FC",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 133
+    },
+    {
+      "match_id": 1996435,
+      "match_label": "Sydney FC v Adelaide United",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 133
+    },
+    {
+      "match_id": 1953632,
+      "match_label": "CC Mariners v Melbourne City",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 133
+    },
+    {
+      "match_id": 1925299,
+      "match_label": "Brisbane FC v Perth Glory",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 133
+    },
+    {
+      "match_id": 1899585,
+      "match_label": "Auckland FC v Wellington P FC",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 133
+    },
+    {
+      "match_id": 1886347,
+      "match_label": "Auckland FC v Newcastle",
+      "tracking_status": "lfs-pointer",
+      "tracking_bytes": 133
+    }
+  ]
+}
